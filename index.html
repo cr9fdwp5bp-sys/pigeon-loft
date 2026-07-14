@@ -29,19 +29,23 @@
     .modal { background:#fff; border-radius:20px; padding:20px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto; }
     .pin-box { text-align:center; margin-top:40px; }
     .pin-box input { text-align:center; font-size:1.4rem; letter-spacing:8px; }
-    .chick-row { display:flex; gap:4px; margin-bottom:4px; align-items:center; }
-    .chick-row input { margin-bottom:0; }
+    .chick-row { display:flex; gap:4px; margin-bottom:8px; align-items:center; flex-wrap:wrap; }
+    .chick-row span { font-weight:bold; min-width:24px; text-align:center; }
+    .chick-row input, .chick-row select { width:auto; flex:1; min-width:60px; margin-bottom:0; }
+    .chick-row .del-chick { width:auto; padding:6px 8px; margin:0; }
     .table-scroll { overflow-x:auto; }
     table { width:100%; border-collapse:collapse; font-size:0.8rem; }
     th, td { border:1px solid #ddd; padding:6px; text-align:center; }
+    .row-flex { display:flex; gap:8px; align-items:center; }
+    .row-flex select { flex:1; margin-bottom:0; }
   </style>
 </head>
 <body>
 <div class="app" id="appRoot"></div>
 
 <script>
-  const APP_PASSWORD = "1234";
-  const STORAGE_KEY = "pigeon_loft_full_v1";
+  const APP_PASSWORD = "8899";
+  const STORAGE_KEY = "pigeon_loft_full_v3";
   let appData = {
     pigeons: [],
     pairs: [],
@@ -66,11 +70,10 @@
       ],
       pairs: [
         { id:'p1', maleRing:'2020-基石雄', femaleRing:'2020-基石雌', date:'2023-02-14', nestBox:'A-01',
-          grandSire:'', grandDam:'', grandSireOut:'', grandDamOut:'',
-          maleDetails:{ ring:'2020-基石雄', color:'灰', eye:'黃眼' },
-          femaleDetails:{ ring:'2020-基石雌', color:'斑', eye:'砂眼' },
+          grandSire:'', grandDam:'',
+          maleDetails:{}, femaleDetails:{},
           chicks: [
-            { seq:1, birthDate:'2023-03-20', year:'2023', ring:'2023-001', color:'灰', sex:'公', eye:'黃眼', race:'', rank:'', note:'' }
+            { seq:1, birthDate:'2023-03-20', year:'2023', ring:'2023-001', color:'灰', sex:'公', eye:'黃眼', strain:'', race:'', rank:'', note:'' }
           ]
         }
       ],
@@ -284,6 +287,7 @@
         </div>
         <strong>${p.maleRing}(${male?.color||''})</strong> ❤️ <strong>${p.femaleRing}(${female?.color||''})</strong><br>
         📅 ${p.date} | 🏠 ${p.nestBox}<br>
+        祖父:${p.grandSire||'無'} 祖母:${p.grandDam||'無'}<br>
         幼鴿:${p.chicks?.length||0}羽 <button class="btn-sm btn-outline chicks-btn" data-id="${p.id}">管理幼鴿</button>
       </div>`;
     }).join('');
@@ -301,28 +305,40 @@
   }
   function editPairDialog(pair=null) {
     const isNew = !pair;
-    showModal(isNew?'新增配對':'編輯配對', `
-      <label>雄鴿環號</label><input id="pMaleRing" value="${pair?.maleRing||''}">
-      <label>雌鴿環號</label><input id="pFemaleRing" value="${pair?.femaleRing||''}">
-      <label>祖父血統</label><input id="pGrandSire" value="${pair?.grandSire||''}">
-      <label>祖母血統</label><input id="pGrandDam" value="${pair?.grandDam||''}">
-      <label>外祖父血統</label><input id="pGrandSireOut" value="${pair?.grandSireOut||''}">
-      <label>外祖母血統</label><input id="pGrandDamOut" value="${pair?.grandDamOut||''}">
+    const existingNest = pair?.nestBox || 'A-01';
+    const [nestAlpha, nestNum] = existingNest.includes('-') ? existingNest.split('-') : ['A','01'];
+    const title = isNew ? '新增配對' : '編輯配對';
+    showModal(title, `
+      <label>公鴿環號</label><input id="pMaleRing" value="${pair?.maleRing||''}">
+      <label>母鴿環號</label><input id="pFemaleRing" value="${pair?.femaleRing||''}">
+      <label>祖父環號</label><input id="pGrandSire" value="${pair?.grandSire||''}">
+      <label>祖母環號</label><input id="pGrandDam" value="${pair?.grandDam||''}">
       <label>配對日期</label><input type="date" id="pDate" value="${pair?.date||''}">
-      <label>巢箱 (A-Z,1-9)</label><input id="pNestBox" value="${pair?.nestBox||''}">
+      <label>巢箱</label>
+      <div class="row-flex">
+        <select id="pNestAlpha">
+          ${[...Array(26)].map((_,i)=> `<option value="${String.fromCharCode(65+i)}" ${String.fromCharCode(65+i)===nestAlpha?'selected':''}>${String.fromCharCode(65+i)}</option>`).join('')}
+        </select>
+        <span>-</span>
+        <select id="pNestNum">
+          ${[...Array(9)].map((_,i)=> `<option value="${String(i+1).padStart(2,'0')}" ${String(i+1).padStart(2,'0')===nestNum?'selected':''}>${i+1}</option>`).join('')}
+        </select>
+      </div>
     `, ()=>{
       const mRing = document.getElementById('pMaleRing').value.trim();
       const fRing = document.getElementById('pFemaleRing').value.trim();
-      if(!mRing||!fRing) return alert('雄雌鴿環號必填');
+      if(!mRing||!fRing) return alert('公母鴿環號必填');
+      const alpha = document.getElementById('pNestAlpha').value;
+      const num = document.getElementById('pNestNum').value;
+      const nestBox = alpha + '-' + num;
       const obj = {
         id: pair?.id || 'p'+Date.now(),
-        maleRing: mRing, femaleRing: fRing,
+        maleRing: mRing,
+        femaleRing: fRing,
         date: document.getElementById('pDate').value,
-        nestBox: document.getElementById('pNestBox').value,
-        grandSire: document.getElementById('pGrandSire').value,
-        grandDam: document.getElementById('pGrandDam').value,
-        grandSireOut: document.getElementById('pGrandSireOut').value,
-        grandDamOut: document.getElementById('pGrandDamOut').value,
+        nestBox: nestBox,
+        grandSire: document.getElementById('pGrandSire').value.trim(),
+        grandDam: document.getElementById('pGrandDam').value.trim(),
         maleDetails: pair?.maleDetails || {},
         femaleDetails: pair?.femaleDetails || {},
         chicks: pair?.chicks || []
@@ -332,53 +348,103 @@
       saveData(); renderPairList();
     });
   }
+
+  // ---------- 幼鴿管理 ----------
   function manageChicksDialog(pair) {
     let html = `<h3>幼鴿管理 - ${pair.maleRing} x ${pair.femaleRing}</h3>`;
-    pair.chicks.forEach((c,i) => {
-      html += `<div class="chick-row">
-        <input value="${c.seq}" placeholder="序號" style="width:40px" data-idx="${i}" class="cSeq">
-        <input value="${c.birthDate}" placeholder="出生日" style="width:80px" class="cBdate">
-        <input value="${c.ring}" placeholder="環號" style="width:80px" class="cRing">
-        <input value="${c.color}" placeholder="羽色" style="width:50px" class="cColor">
-        <select class="cSex" style="width:50px"><option ${c.sex==='公'?'selected':''}>公</option><option ${c.sex==='母'?'selected':''}>母</option></select>
-        <button class="btn-sm btn-danger del-chick">X</button>
-      </div>`;
+    pair.chicks.forEach((c, idx) => {
+      html += `
+        <div class="chick-row" data-index="${idx}">
+          <span>${c.seq}</span>
+          <input type="date" value="${c.birthDate||''}" placeholder="出生日" class="cBirth">
+          <input value="${c.ring||''}" placeholder="環號" class="cRing">
+          <select class="cSex">
+            <option ${c.sex==='公'?'selected':''}>公</option>
+            <option ${c.sex==='母'?'selected':''}>母</option>
+          </select>
+          <input value="${c.color||''}" placeholder="羽色" class="cColor">
+          <input value="${c.eye||''}" placeholder="眼砂" class="cEye">
+          <input value="${c.strain||''}" placeholder="血統" class="cStrain">
+          <button class="btn-sm btn-danger del-chick">✕</button>
+        </div>
+      `;
     });
-    html += `<button class="btn btn-sm" id="addChickRow">➕ 新增幼鴿</button>`;
-    showModal('幼鴿管理', html, ()=>{
-      const rows = document.querySelectorAll('.chick-row');
+    const maxSeq = pair.chicks.reduce((m, c) => Math.max(m, parseInt(c.seq)||0), 0);
+    const canAdd = maxSeq < 10;
+    if (canAdd) {
+      html += `<button class="btn btn-sm" id="addChickRow">➕ 新增幼鴿</button>`;
+    } else {
+      html += `<p style="color:#c44; font-size:0.8rem;">已達10筆上限</p>`;
+    }
+
+    showModal('幼鴿管理', html, () => {
+      const rows = document.querySelectorAll('#modalContent .chick-row');
       const newChicks = [];
       rows.forEach(row => {
-        const seq = row.querySelector('.cSeq').value;
-        const birthDate = row.querySelector('.cBdate').value;
-        const ring = row.querySelector('.cRing').value;
-        const color = row.querySelector('.cColor').value;
-        const sex = row.querySelector('.cSex').value;
-        if(seq && ring) {
-          newChicks.push({ seq, birthDate, year: birthDate?.split('-')[0]||'', ring, color, sex, eye:'', race:'', rank:'', note:'' });
+        const seq = parseInt(row.querySelector('span').textContent) || 0;
+        const birthDate = row.querySelector('.cBirth')?.value || '';
+        const ring = row.querySelector('.cRing')?.value || '';
+        const sex = row.querySelector('.cSex')?.value || '公';
+        const color = row.querySelector('.cColor')?.value || '';
+        const eye = row.querySelector('.cEye')?.value || '';
+        const strain = row.querySelector('.cStrain')?.value || '';
+        if (seq && ring) {
+          newChicks.push({ seq, birthDate, year: birthDate?.split('-')[0]||'', ring, sex, color, eye, strain, race:'', rank:'', note:'' });
         }
       });
       pair.chicks = newChicks;
-      saveData(); renderPairList();
+      saveData();
+      renderPairList();
     });
-    document.getElementById('addChickRow').addEventListener('click', ()=>{
-      const row = document.createElement('div');
-      row.className = 'chick-row';
-      row.innerHTML = `<input placeholder="序號" style="width:40px" class="cSeq"><input placeholder="出生日" style="width:80px" class="cBdate"><input placeholder="環號" style="width:80px" class="cRing"><input placeholder="羽色" style="width:50px" class="cColor"><select class="cSex" style="width:50px"><option>公</option><option>母</option></select><button class="btn-sm btn-danger del-chick">X</button>`;
-      document.getElementById('addChickRow').before(row);
-      row.querySelector('.del-chick').addEventListener('click', ()=> row.remove());
+
+    document.querySelectorAll('.del-chick').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.closest('.chick-row').remove();
+      });
     });
-    document.querySelectorAll('.del-chick').forEach(b => b.addEventListener('click', ()=> b.closest('.chick-row').remove()));
+
+    const addBtn = document.getElementById('addChickRow');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        const currentRows = document.querySelectorAll('#modalContent .chick-row');
+        const existingSeqs = Array.from(currentRows).map(r => parseInt(r.querySelector('span').textContent) || 0);
+        const maxSeqNow = existingSeqs.length ? Math.max(...existingSeqs) : 0;
+        const newSeq = maxSeqNow + 1;
+        if (newSeq > 10) return;
+        const newRow = document.createElement('div');
+        newRow.className = 'chick-row';
+        newRow.innerHTML = `
+          <span>${newSeq}</span>
+          <input type="date" placeholder="出生日" class="cBirth">
+          <input placeholder="環號" class="cRing">
+          <select class="cSex"><option>公</option><option>母</option></select>
+          <input placeholder="羽色" class="cColor">
+          <input placeholder="眼砂" class="cEye">
+          <input placeholder="血統" class="cStrain">
+          <button class="btn-sm btn-danger del-chick">✕</button>
+        `;
+        addBtn.before(newRow);
+        newRow.querySelector('.del-chick').addEventListener('click', () => newRow.remove());
+        if (newSeq >= 10) addBtn.remove();
+      });
+    }
   }
 
-  // ========== 藥物面板 ==========
+  // ========== 藥物面板 (新欄位) ==========
   function renderMedicationPanel() {
     const panel = document.getElementById('panelMedication');
     panel.innerHTML = `
       <div class="card">
         <label>足環號碼</label><input id="medRing">
-        <label>日期</label><input type="date" id="medDate">
-        <label>事項</label><input id="medNote">
+        <div class="row-flex">
+          <div style="flex:1"><label>開始日期</label><input type="date" id="medStartDate"></div>
+          <div style="flex:1"><label>結束日期</label><input type="date" id="medEndDate"></div>
+        </div>
+        <label>事由</label><input id="medReason">
+        <label>處方</label><input id="medPrescription">
+        <label>劑量</label><input id="medDosage">
+        <label>結果</label><input id="medResult">
         <button class="btn" id="saveMedBtn">記錄</button>
       </div>
       <div id="medList"></div>
@@ -386,27 +452,40 @@
     renderMedList();
     document.getElementById('saveMedBtn').addEventListener('click', ()=>{
       const ring = document.getElementById('medRing').value.trim();
-      const date = document.getElementById('medDate').value;
-      const note = document.getElementById('medNote').value.trim();
-      if(!ring||!date||!note) return alert('請完整填寫');
-      appData.medications.push({ ring, date, note });
+      const startDate = document.getElementById('medStartDate').value;
+      const endDate = document.getElementById('medEndDate').value;
+      const reason = document.getElementById('medReason').value.trim();
+      const prescription = document.getElementById('medPrescription').value.trim();
+      const dosage = document.getElementById('medDosage').value.trim();
+      const result = document.getElementById('medResult').value.trim();
+      if(!ring || !startDate) return alert('請至少填寫足環號碼與開始日期');
+      appData.medications.push({ ring, startDate, endDate, reason, prescription, dosage, result });
       saveData(); renderMedList();
-      document.getElementById('medRing').value=''; document.getElementById('medDate').value=''; document.getElementById('medNote').value='';
+      // 清空輸入
+      ['medRing','medStartDate','medEndDate','medReason','medPrescription','medDosage','medResult'].forEach(id => document.getElementById(id).value='');
     });
   }
   function renderMedList() {
     const list = document.getElementById('medList');
-    list.innerHTML = appData.medications.slice().reverse().map(m => `
-      <div class="item">
-        <strong>${m.ring}</strong> | ${m.date}<br>${m.note}
-        <button class="icon-btn del-med" style="float:right;">🗑️</button>
-      </div>
-    `).join('');
-    list.querySelectorAll('.del-med').forEach((b,i) => b.addEventListener('click', ()=>{
-      const idx = appData.medications.length - 1 - i;
-      appData.medications.splice(idx,1);
-      saveData(); renderMedList();
-    }));
+    list.innerHTML = '<h3>藥物記錄</h3>';
+    appData.medications.slice().reverse().forEach((m, i) => {
+      list.innerHTML += `
+        <div class="item">
+          <strong>${m.ring}</strong><br>
+          🗓️ ${m.startDate || '?'} ～ ${m.endDate || '?'}<br>
+          📌 事由: ${m.reason || '-'} | 處方: ${m.prescription || '-'}<br>
+          💊 劑量: ${m.dosage || '-'} | 結果: ${m.result || '-'}
+          <button class="icon-btn del-med" style="float:right;">🗑️</button>
+        </div>
+      `;
+    });
+    list.querySelectorAll('.del-med').forEach((btn, idx) => {
+      btn.addEventListener('click', ()=>{
+        const realIdx = appData.medications.length - 1 - idx;
+        appData.medications.splice(realIdx, 1);
+        saveData(); renderMedList();
+      });
+    });
   }
 
   // ========== 訓放面板 ==========
@@ -432,8 +511,8 @@
           <input placeholder="環號" value="${e.ring}" class="eRing">
           <select class="eSex"><option ${e.sex==='公'?'selected':''}>公</option><option ${e.sex==='母'?'selected':''}>母</option></select>
           <input placeholder="羽色" value="${e.color}" class="eColor">
-          <input placeholder="歸巢時間" value="${e.returnTime}" class="eReturn">
-          <button class="btn-sm btn-danger del-entry">X</button>
+          <input type="time" value="${e.returnTime}" class="eReturn" placeholder="24h">
+          <button class="btn-sm btn-danger del-entry">✕</button>
         </div>
       `).join('');
       container.querySelectorAll('.del-entry').forEach(b => b.addEventListener('click', (e)=>{
