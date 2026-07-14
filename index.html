@@ -9,7 +9,8 @@
     body { background:#f5f0e8; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:16px; }
     .app { max-width:500px; width:100%; background:#fffef9; border-radius:24px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.06); }
     h1 { font-size:1.6rem; color:#4a3b2f; margin-bottom:8px; }
-    .sub { color:#7b6e5d; font-size:0.8rem; margin-bottom:16px; }
+    .sub { color:#7b6e5d; font-size:0.8rem; margin-bottom:16px; display:flex; justify-content:space-between; flex-wrap:wrap; }
+    .stats { background:#f0eadb; border-radius:20px; padding:4px 12px; font-weight:600; color:#4a3b2f; }
     .tab-bar { display:flex; gap:4px; background:#f0eadb; border-radius:30px; padding:4px; margin-bottom:16px; flex-wrap:wrap; }
     .tab { flex:1 0 auto; text-align:center; padding:10px 4px; font-weight:600; font-size:0.75rem; border-radius:26px; background:transparent; border:none; color:#5e4e3a; cursor:pointer; }
     .tab.active { background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
@@ -37,6 +38,9 @@
     .del-chick { padding:2px 6px; font-size:0.7rem; margin:0; }
     .row-flex { display:flex; gap:8px; align-items:center; }
     .row-flex select { flex:1; margin-bottom:0; }
+    .search-hint { font-size:0.75rem; color:#888; margin-top:4px; }
+    .pedigree-list-item { cursor:pointer; }
+    .pedigree-list-item:hover { background:#efe8db; }
   </style>
 </head>
 <body>
@@ -44,7 +48,7 @@
 
 <script>
   (function() {
-    // ----- 安全轉義函式 -----
+    // ----- 安全轉義 -----
     function escapeHtml(str) {
       if (!str) return '';
       const map = {
@@ -102,6 +106,16 @@
       return appData.pigeons.find(p => p.ring === q || p.name === q);
     }
 
+    // ----- 統計更新 -----
+    function updateStats() {
+      const statsEl = document.getElementById('statsDisplay');
+      if (!statsEl) return;
+      const total = appData.pigeons.length;
+      const male = appData.pigeons.filter(p => p.sex === '公').length;
+      const female = appData.pigeons.filter(p => p.sex === '母').length;
+      statsEl.textContent = `總數: ${total} ｜ 公: ${male} ｜ 母: ${female}`;
+    }
+
     // ----- 主畫面渲染 -----
     function renderApp() {
       if (!unlocked) {
@@ -126,7 +140,10 @@
           <h1>🕊️ 鴿舍管家</h1>
           <button class="btn-outline" id="logoutBtn" style="width:auto; padding:8px 16px;">鎖定</button>
         </div>
-        <div class="sub">全功能管理系統</div>
+        <div class="sub">
+          <span>全功能管理系統</span>
+          <span class="stats" id="statsDisplay"></span>
+        </div>
         <div class="tab-bar" id="tabBar"></div>
         <div id="panelContainer"></div>
       `;
@@ -165,6 +182,7 @@
       renderMedicationPanel();
       renderTrainingPanel();
       renderBackupPanel();
+      updateStats(); // 初始統計
       document.getElementById('logoutBtn').addEventListener('click', ()=>{ unlocked = false; renderApp(); });
     }
 
@@ -180,7 +198,7 @@
       });
     }
 
-    // ----- 工具：顯示模態對話框 (安全版) -----
+    // ----- 工具：模態對話框 -----
     function showModal(title, htmlContent, onSave) {
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -199,7 +217,7 @@
       overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.remove(); });
     }
 
-    // ===== 鴿子面板 =====
+    // ===== 鴿子面板（含編號） =====
     function renderPigeonsPanel() {
       const panel = document.getElementById('panelPigeons');
       panel.innerHTML = `
@@ -215,14 +233,15 @@
     function renderPigeonList() {
       const list = document.getElementById('pigeonList');
       let html = '';
-      appData.pigeons.forEach(p => {
+      appData.pigeons.forEach((p, index) => {
+        const seq = index + 1;
         html += `
           <div class="item">
             <div class="item-actions">
               <button class="icon-btn edit-pigeon" data-ring="${escapeHtml(p.ring)}">✏️</button>
               <button class="icon-btn del-pigeon" data-ring="${escapeHtml(p.ring)}">🗑️</button>
             </div>
-            <strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex||'')} | ${escapeHtml(p.color||'')} | ${escapeHtml(p.eye||'')}<br>
+            <strong>#${seq} ${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex||'')} | ${escapeHtml(p.color||'')} | ${escapeHtml(p.eye||'')}<br>
             <small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')} | 名次:${escapeHtml(p.rank||'-')}</small><br>
             <small>備註:${escapeHtml(p.note||'')}</small>
           </div>
@@ -237,7 +256,7 @@
       list.querySelectorAll('.del-pigeon').forEach(b => b.addEventListener('click', ()=>{
         if(confirm('刪除鴿子 '+b.dataset.ring+' ？')) {
           appData.pigeons = appData.pigeons.filter(p => p.ring !== b.dataset.ring);
-          saveData(); renderPigeonList();
+          saveData(); renderPigeonList(); updateStats();
         }
       }));
     }
@@ -309,27 +328,79 @@
           pigeon.sire = pSire;
           pigeon.dam = pDam;
         }
-        saveData(); renderPigeonList(); renderPedigreePanel();
+        saveData(); renderPigeonList(); renderPedigreePanel(); updateStats();
       });
     }
 
-    // ===== 血統面板 =====
+    // ===== 血統面板（強化搜尋） =====
     function renderPedigreePanel() {
       const panel = document.getElementById('panelPedigree');
       panel.innerHTML = `
-        <input type="text" id="searchInput" placeholder="🔍 輸入足環號碼查血統">
-        <div id="pedigreeView"><div class="card">請輸入環號</div></div>
+        <div class="card">
+          <input type="text" id="searchInput" placeholder="🔍 輸入足環號碼（精確）或任意關鍵字搜尋">
+          <div class="search-hint">支援：年份、暱稱、性別、羽色、眼砂、賽事、名次</div>
+        </div>
+        <div id="pedigreeView"><div class="card">請輸入查詢條件</div></div>
       `;
-      document.getElementById('searchInput').addEventListener('input', e => showPedigree(e.target.value));
+      document.getElementById('searchInput').addEventListener('input', function() {
+        const q = this.value.trim();
+        if (!q) {
+          document.getElementById('pedigreeView').innerHTML = '<div class="card">請輸入查詢條件</div>';
+          return;
+        }
+        const exact = findPigeon(q);
+        if (exact) {
+          showPedigreeTree(exact);
+          return;
+        }
+        const results = performSearch(q);
+        if (results.length === 0) {
+          document.getElementById('pedigreeView').innerHTML = '<div class="card">❌ 找不到符合的鴿子</div>';
+        } else {
+          showSearchResults(results);
+        }
+      });
     }
 
-    function showPedigree(q) {
+    function performSearch(keyword) {
+      const lower = keyword.toLowerCase();
+      return appData.pigeons.filter(p => {
+        const fields = [p.year, p.name, p.sex, p.color, p.eye, p.race, p.rank, p.ring, p.strain, p.note];
+        return fields.some(f => f && f.toLowerCase().includes(lower));
+      });
+    }
+
+    function showSearchResults(results) {
       const view = document.getElementById('pedigreeView');
-      if(!q) { view.innerHTML='<div class="card">請輸入環號</div>'; return; }
-      const p = findPigeon(q);
-      if(!p) { view.innerHTML='<div class="card">❌ 找不到</div>'; return; }
-      const tree = buildTree(p);
-      view.innerHTML = `<div class="card"><strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) 血統樹</div>`;
+      let html = `<div class="card">🔍 找到 ${results.length} 筆符合的鴿子</div>`;
+      results.forEach((p, idx) => {
+        html += `
+          <div class="item pedigree-list-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex||'')} | ${escapeHtml(p.color||'')} | ${escapeHtml(p.eye||'')}
+                <br><small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')} | 名次:${escapeHtml(p.rank||'-')}</small>
+              </div>
+              <button class="btn-sm btn-outline view-pedigree-btn" data-ring="${escapeHtml(p.ring)}">🔍 查看血統</button>
+            </div>
+          </div>
+        `;
+      });
+      view.innerHTML = html;
+      view.querySelectorAll('.view-pedigree-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const ring = this.dataset.ring;
+          const pigeon = findPigeon(ring);
+          if (pigeon) showPedigreeTree(pigeon);
+        });
+      });
+    }
+
+    function showPedigreeTree(pigeon) {
+      const view = document.getElementById('pedigreeView');
+      const tree = buildTree(pigeon);
+      view.innerHTML = `<div class="card"><strong>${escapeHtml(pigeon.ring)}</strong> (${escapeHtml(pigeon.year||'')}) 血統樹</div>`;
       renderTree(tree, view);
     }
 
@@ -447,7 +518,7 @@
       });
     }
 
-    // ----- 幼鴿管理 (安全版) -----
+    // ----- 幼鴿管理 -----
     function manageChicksDialog(pair) {
       const maleRing = pair.maleRing || '?';
       const femaleRing = pair.femaleRing || '?';
@@ -497,7 +568,7 @@
         let seqCounter = 1;
         rows.forEach(row => {
           const ring = row.querySelector('.cRing')?.value?.trim() || '';
-          if (!ring) return; // 忽略空白環號
+          if (!ring) return;
           const year = row.querySelector('.cYear')?.value || '';
           const sex = row.querySelector('.cSex')?.value || '公';
           const color = row.querySelector('.cColor')?.value || '';
@@ -506,7 +577,6 @@
           const race = row.querySelector('.cRace')?.value || '';
           const rank = row.querySelector('.cRank')?.value || '';
           const note = row.querySelector('.cNote')?.value || '';
-          // 保留原有 birthDate 如果該序號存在
           const oldSeq = parseInt(row.dataset.seq) || 0;
           const oldChick = pair.chicks.find(c => c.seq === oldSeq);
           const birthDate = oldChick ? oldChick.birthDate : '';
@@ -517,7 +587,6 @@
         renderPairList();
       });
 
-      // 綁定刪除按鈕 (在模態框顯示後)
       setTimeout(() => {
         document.querySelectorAll('#modalContent .del-chick').forEach(btn => {
           btn.addEventListener('click', (e) => {
