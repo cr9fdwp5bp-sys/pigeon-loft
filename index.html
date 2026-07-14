@@ -3,290 +3,537 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>鴿舍管家 · 簡易版</title>
+  <title>鴿舍管家 · 全功能版</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
     body { background:#f5f0e8; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:16px; }
     .app { max-width:500px; width:100%; background:#fffef9; border-radius:24px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.06); }
     h1 { font-size:1.6rem; color:#4a3b2f; margin-bottom:8px; }
     .sub { color:#7b6e5d; font-size:0.8rem; margin-bottom:16px; }
-    .tab-bar { display:flex; gap:4px; background:#f0eadb; border-radius:30px; padding:4px; margin-bottom:16px; }
-    .tab { flex:1; text-align:center; padding:10px; font-weight:600; font-size:0.85rem; border-radius:26px; background:transparent; border:none; color:#5e4e3a; }
+    .tab-bar { display:flex; gap:4px; background:#f0eadb; border-radius:30px; padding:4px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { flex:1 0 auto; text-align:center; padding:10px 4px; font-weight:600; font-size:0.75rem; border-radius:26px; background:transparent; border:none; color:#5e4e3a; }
     .tab.active { background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
     .panel { display:none; }
     .panel.active { display:block; }
     .card { background:#fff; border-radius:16px; padding:14px; margin-bottom:12px; border:1px solid #ede3cf; }
     label { font-size:0.75rem; font-weight:600; color:#7a6a55; display:block; margin-bottom:4px; }
-    input { width:100%; padding:12px; border:1px solid #dbcfb8; border-radius:14px; font-size:0.95rem; background:#fefcf7; margin-bottom:10px; }
+    input, select { width:100%; padding:12px; border:1px solid #dbcfb8; border-radius:14px; font-size:0.95rem; background:#fefcf7; margin-bottom:10px; }
     .btn { background:#3e3629; color:#fff; border:none; border-radius:25px; padding:12px; font-weight:700; width:100%; font-size:0.95rem; cursor:pointer; margin-top:4px; }
     .btn-outline { background:#f2e7d5; color:#3e3629; border:1px solid #ccbc9c; }
-    .item { background:#faf7f0; border-radius:14px; padding:12px; margin-bottom:8px; border-left:5px solid #c8a96e; font-size:0.9rem; }
+    .btn-sm { width:auto; padding:6px 14px; font-size:0.8rem; margin:4px; }
+    .btn-danger { background:#c44; color:#fff; border:none; }
+    .item { background:#faf7f0; border-radius:14px; padding:12px; margin-bottom:8px; border-left:5px solid #c8a96e; font-size:0.9rem; position:relative; }
+    .item-actions { position:absolute; top:8px; right:8px; display:flex; gap:6px; }
+    .icon-btn { background:none; border:none; font-size:1.2rem; cursor:pointer; padding:4px; }
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; }
+    .modal { background:#fff; border-radius:20px; padding:20px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto; }
     .pin-box { text-align:center; margin-top:40px; }
     .pin-box input { text-align:center; font-size:1.4rem; letter-spacing:8px; }
-    .hidden { display:none; }
+    .chick-row { display:flex; gap:4px; margin-bottom:4px; align-items:center; }
+    .chick-row input { margin-bottom:0; }
+    .table-scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+    th, td { border:1px solid #ddd; padding:6px; text-align:center; }
   </style>
 </head>
 <body>
 <div class="app" id="appRoot"></div>
 
 <script>
-  // ========== 設定區（可自行修改） ==========
-  const APP_PASSWORD = "8899";   // 登入密碼，改成你想要的
-  // =========================================
-
-  const STORAGE_KEY = "pigeon_loft_data_v2";
-  let appData = { pigeons: [], pairs: [], nests: [] };
+  const APP_PASSWORD = "1234";
+  const STORAGE_KEY = "pigeon_loft_full_v1";
+  let appData = {
+    pigeons: [],
+    pairs: [],
+    nests: [],
+    medications: [],
+    trainings: []
+  };
   let unlocked = false;
 
-  // 初始化資料
   function loadData() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      try { appData = JSON.parse(saved); } catch(e) { resetData(); }
-    } else {
-      resetData();
-    }
+      try { appData = JSON.parse(saved); } catch(e) { initDefault(); }
+    } else { initDefault(); }
   }
-  function resetData() {
+  function initDefault() {
     appData = {
       pigeons: [
-        { id:'2020-基石雄', name:'基石雄', ring:'2020-基石雄', sire:'', dam:'', note:'基礎種雄' },
-        { id:'2020-基石雌', name:'基石雌', ring:'2020-基石雌', sire:'', dam:'', note:'基礎種雌' },
-        { id:'2022-閃電號', name:'閃電號', ring:'2022-閃電號', sire:'2020-基石雄', dam:'2020-基石雌', note:'直子' }
+        { id:'2020-基石雄', name:'基石雄', ring:'2020-基石雄', sex:'公', color:'灰', eye:'黃眼', strain:'詹森', note:'基礎種雄', sire:'', dam:'' },
+        { id:'2020-基石雌', name:'基石雌', ring:'2020-基石雌', sex:'母', color:'斑', eye:'砂眼', strain:'凡布利安娜', note:'基礎種雌', sire:'', dam:'' },
+        { id:'2022-閃電號', name:'閃電號', ring:'2022-閃電號', sex:'公', color:'銀', eye:'黃眼', strain:'混合', note:'直子', sire:'2020-基石雄', dam:'2020-基石雌' }
       ],
       pairs: [
-        { id:'p1', male:'2020-基石雄', female:'2020-基石雌', date:'2023-02-14', nestBox:'A-01' }
+        { id:'p1', maleRing:'2020-基石雄', femaleRing:'2020-基石雌', date:'2023-02-14', nestBox:'A-01',
+          grandSire:'', grandDam:'', grandSireOut:'', grandDamOut:'',
+          maleDetails:{ ring:'2020-基石雄', color:'灰', eye:'黃眼' },
+          femaleDetails:{ ring:'2020-基石雌', color:'斑', eye:'砂眼' },
+          chicks: [
+            { seq:1, birthDate:'2023-03-20', year:'2023', ring:'2023-001', color:'灰', sex:'公', eye:'黃眼', race:'', rank:'', note:'' }
+          ]
+        }
       ],
-      nests: [
-        { nestId:'A-01', pigeon:'2020-基石雄 & 2020-基石雌', location:'左區上層' }
-      ]
+      nests: [ { nestId:'A-01', pigeon:'2020-基石雄 & 2020-基石雌', location:'左區上層' } ],
+      medications: [],
+      trainings: []
     };
     saveData();
   }
-  function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-  }
+  function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
 
-  // 找鴿子
-  function findPigeon(q) {
-    return appData.pigeons.find(p => p.ring===q || p.name===q || p.id===q);
-  }
+  function findPigeon(q) { return appData.pigeons.find(p => p.ring===q || p.name===q || p.id===q); }
 
-  // 血統樹
-  function buildTree(p, depth=0, max=3) {
-    if(!p || depth>max) return null;
-    return {
-      p, depth,
-      sire: buildTree(findPigeon(p.sire), depth+1, max),
-      dam: buildTree(findPigeon(p.dam), depth+1, max)
-    };
-  }
-
-  // 畫面切換
+  // ========== 主畫面 ==========
   function renderApp() {
     if (!unlocked) {
       document.getElementById('appRoot').innerHTML = `
         <div class="pin-box">
           <h1>🕊️ 鴿舍管家</h1>
-          <p style="color:#7b6e5d; margin-bottom:20px;">請輸入管理密碼</p>
+          <p style="color:#7b6e5d;">請輸入管理密碼</p>
           <input type="password" id="pinInput" placeholder="····" maxlength="10">
           <button class="btn" id="loginBtn" style="margin-top:12px;">進入系統</button>
-          <p style="font-size:0.7rem; color:#aaa; margin-top:20px;">預設密碼：1234</p>
+          <p style="font-size:0.7rem; color:#aaa;">預設密碼：1234</p>
         </div>
       `;
       document.getElementById('loginBtn').addEventListener('click', ()=>{
-        if(document.getElementById('pinInput').value === APP_PASSWORD) {
-          unlocked = true;
-          renderApp();
-        } else {
-          alert('密碼錯誤');
-        }
+        if(document.getElementById('pinInput').value === APP_PASSWORD) { unlocked = true; renderApp(); }
+        else alert('密碼錯誤');
       });
       return;
     }
 
-    // 主畫面
     document.getElementById('appRoot').innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h1>🕊️ 鴿舍管家</h1>
-        <button class="btn-outline" id="logoutBtn" style="width:auto; padding:8px 16px; font-size:0.8rem;">鎖定</button>
+        <button class="btn-outline" id="logoutBtn" style="width:auto; padding:8px 16px;">鎖定</button>
       </div>
-      <div class="sub">直系血統 · 配對 · 巢箱</div>
-      <div class="tab-bar">
-        <button class="tab active" data-tab="pedigree">📋 血統</button>
-        <button class="tab" data-tab="pairing">💞 配對</button>
-        <button class="tab" data-tab="nest">📦 巢箱</button>
-        <button class="tab" data-tab="backup">💾 備份</button>
-      </div>
-
-      <div class="panel active" id="panelPedigree">
-        <input type="text" id="searchInput" placeholder="🔍 輸入鴿環號查血統">
-        <div id="pedigreeView"></div>
-        <button class="btn-outline" id="addPigeonBtn">➕ 新增種鴿</button>
-      </div>
-
-      <div class="panel" id="panelPairing">
-        <div class="card">
-          <label>雄鴿</label><input id="maleInput" placeholder="環號">
-          <label>雌鴿</label><input id="femaleInput" placeholder="環號">
-          <label>日期</label><input type="date" id="pairDate">
-          <label>巢箱</label><input id="pairNest" placeholder="A-03">
-          <button class="btn" id="savePairBtn">儲存配對</button>
-        </div>
-        <div id="pairList"></div>
-      </div>
-
-      <div class="panel" id="panelNest">
-        <div class="card">
-          <label>巢箱編號</label><input id="nestId" placeholder="B-12">
-          <label>鴿子</label><input id="nestPigeon" placeholder="鴿子或配對">
-          <label>位置</label><input id="nestLoc" placeholder="南面牆">
-          <button class="btn" id="saveNestBtn">更新巢箱</button>
-        </div>
-        <div id="nestList"></div>
-      </div>
-
-      <div class="panel" id="panelBackup">
-        <div class="card">
-          <p style="font-weight:700; margin-bottom:10px;">📤 匯出備份</p>
-          <button class="btn" id="exportBtn">下載備份檔案 (JSON)</button>
-          <p style="font-size:0.7rem; color:#8b7a62; margin-top:8px;">建議存在雲端硬碟或電腦</p>
-        </div>
-        <div class="card">
-          <p style="font-weight:700; margin-bottom:10px;">📥 匯入還原</p>
-          <input type="file" id="importFile" accept=".json" style="margin-bottom:6px;">
-          <button class="btn-outline" id="importBtn">還原資料</button>
-          <p style="font-size:0.7rem; color:#c44; margin-top:6px;">⚠️ 會覆蓋目前所有資料</p>
-        </div>
-      </div>
+      <div class="sub">全功能管理系統</div>
+      <div class="tab-bar" id="tabBar"></div>
+      <div id="panelContainer"></div>
     `;
 
-    bindEvents();
-    refreshAllViews();
+    const tabs = [
+      { key:'pigeons', label:'🐦 鴿子' },
+      { key:'pedigree', label:'📋 血統' },
+      { key:'pairing', label:'💞 配對' },
+      { key:'medication', label:'💊 藥物' },
+      { key:'training', label:'🚀 訓放' },
+      { key:'backup', label:'💾 備份' }
+    ];
+    const tabBar = document.getElementById('tabBar');
+    tabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab';
+      btn.dataset.tab = t.key;
+      btn.textContent = t.label;
+      tabBar.appendChild(btn);
+    });
+    tabBar.firstChild.classList.add('active');
+    const panelContainer = document.getElementById('panelContainer');
+    panelContainer.innerHTML = `
+      <div class="panel active" id="panelPigeons"></div>
+      <div class="panel" id="panelPedigree"></div>
+      <div class="panel" id="panelPairing"></div>
+      <div class="panel" id="panelMedication"></div>
+      <div class="panel" id="panelTraining"></div>
+      <div class="panel" id="panelBackup"></div>
+    `;
+
+    bindTabEvents();
+    renderPigeonsPanel();
+    renderPedigreePanel();
+    renderPairingPanel();
+    renderMedicationPanel();
+    renderTrainingPanel();
+    renderBackupPanel();
+    document.getElementById('logoutBtn').addEventListener('click', ()=>{ unlocked = false; renderApp(); });
   }
 
-  function bindEvents() {
-    // 頁籤切換
-    document.querySelectorAll('.tab').forEach(t => {
-      t.addEventListener('click', ()=>{
-        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  function bindTabEvents() {
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
         document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-        t.classList.add('active');
-        document.getElementById('panel'+t.dataset.tab.charAt(0).toUpperCase()+t.dataset.tab.slice(1)).classList.add('active');
+        document.getElementById('panel' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1)).classList.add('active');
       });
-    });
-    // 鎖定
-    document.getElementById('logoutBtn').addEventListener('click', ()=>{
-      unlocked = false;
-      renderApp();
-    });
-    // 查血統
-    document.getElementById('searchInput').addEventListener('input', e => showPedigree(e.target.value));
-    document.getElementById('addPigeonBtn').addEventListener('click', addPigeon);
-    // 配對
-    document.getElementById('savePairBtn').addEventListener('click', ()=>{
-      const m = document.getElementById('maleInput').value.trim();
-      const f = document.getElementById('femaleInput').value.trim();
-      if(!m||!f) return alert('請填雄雌鴿');
-      appData.pairs.push({
-        id:'p'+Date.now(),
-        male:m, female:f,
-        date: document.getElementById('pairDate').value || new Date().toISOString().split('T')[0],
-        nestBox: document.getElementById('pairNest').value.trim()
-      });
-      saveData();
-      renderPairList();
-      ['maleInput','femaleInput','pairDate','pairNest'].forEach(id=>document.getElementById(id).value='');
-    });
-    // 巢箱
-    document.getElementById('saveNestBtn').addEventListener('click', ()=>{
-      const id = document.getElementById('nestId').value.trim();
-      if(!id) return alert('請輸入巢箱編號');
-      const entry = {
-        nestId: id,
-        pigeon: document.getElementById('nestPigeon').value.trim(),
-        location: document.getElementById('nestLoc').value.trim()
-      };
-      const idx = appData.nests.findIndex(n=>n.nestId===id);
-      if(idx!==-1) appData.nests[idx]=entry; else appData.nests.push(entry);
-      saveData();
-      renderNestList();
-      ['nestId','nestPigeon','nestLoc'].forEach(id=>document.getElementById(id).value='');
-    });
-    // 匯出
-    document.getElementById('exportBtn').addEventListener('click', ()=>{
-      const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `鴿舍備份_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-    });
-    // 匯入
-    document.getElementById('importBtn').addEventListener('click', ()=>{
-      const fileInput = document.getElementById('importFile');
-      if(!fileInput.files.length) return alert('請選擇備份檔案');
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target.result);
-          if(data.pigeons && data.pairs && data.nests) {
-            appData = data;
-            saveData();
-            refreshAllViews();
-            alert('還原成功！');
-          } else {
-            alert('檔案格式不正確');
-          }
-        } catch(ex) { alert('讀取失敗'); }
-      };
-      reader.readAsText(fileInput.files[0]);
     });
   }
 
+  // ========== 鴿子列表面板 ==========
+  function renderPigeonsPanel() {
+    const panel = document.getElementById('panelPigeons');
+    panel.innerHTML = `
+      <div class="card">
+        <button class="btn" id="addPigeonBtn">➕ 新增鴿子</button>
+      </div>
+      <div id="pigeonList"></div>
+    `;
+    renderPigeonList();
+    document.getElementById('addPigeonBtn').addEventListener('click', ()=> editPigeonDialog(null));
+  }
+  function renderPigeonList() {
+    const list = document.getElementById('pigeonList');
+    list.innerHTML = appData.pigeons.map(p => `
+      <div class="item">
+        <div class="item-actions">
+          <button class="icon-btn edit-pigeon" data-ring="${p.ring}">✏️</button>
+          <button class="icon-btn del-pigeon" data-ring="${p.ring}">🗑️</button>
+        </div>
+        <strong>${p.ring}</strong> ${p.name} | ${p.sex||''} | ${p.color||''} | ${p.eye||''}<br>
+        <small>血統:${p.strain||''} | 備註:${p.note||''}</small>
+      </div>
+    `).join('');
+    list.querySelectorAll('.edit-pigeon').forEach(b => b.addEventListener('click', ()=>{
+      const pigeon = findPigeon(b.dataset.ring);
+      if(pigeon) editPigeonDialog(pigeon);
+    }));
+    list.querySelectorAll('.del-pigeon').forEach(b => b.addEventListener('click', ()=>{
+      if(confirm('刪除鴿子 '+b.dataset.ring+' ？')) {
+        appData.pigeons = appData.pigeons.filter(p => p.ring !== b.dataset.ring);
+        saveData(); renderPigeonList();
+      }
+    }));
+  }
+  function editPigeonDialog(pigeon=null) {
+    const isNew = !pigeon;
+    const title = isNew ? '新增鴿子' : '編輯鴿子';
+    const ring = isNew ? '' : pigeon.ring;
+    showModal(title, `
+      <label>足環號碼</label><input id="pRing" value="${ring}" ${isNew ? '' : 'readonly'}>
+      <label>暱稱</label><input id="pName" value="${isNew ? '' : pigeon.name}">
+      <label>性別</label><select id="pSex"><option ${pigeon?.sex==='公'?'selected':''}>公</option><option ${pigeon?.sex==='母'?'selected':''}>母</option></select>
+      <label>羽色</label><input id="pColor" value="${pigeon?.color||''}">
+      <label>眼砂</label><input id="pEye" value="${pigeon?.eye||''}">
+      <label>血統</label><input id="pStrain" value="${pigeon?.strain||''}">
+      <label>備註</label><input id="pNote" value="${pigeon?.note||''}">
+    `, ()=>{
+      const r = document.getElementById('pRing').value.trim();
+      if(!r) return alert('足環號碼必填');
+      if(isNew && findPigeon(r)) return alert('此環號已存在');
+      if(isNew) {
+        appData.pigeons.push({ id:r, name:document.getElementById('pName').value.trim()||r, ring:r, sex:document.getElementById('pSex').value, color:document.getElementById('pColor').value, eye:document.getElementById('pEye').value, strain:document.getElementById('pStrain').value, note:document.getElementById('pNote').value, sire:'', dam:'' });
+      } else {
+        pigeon.name = document.getElementById('pName').value.trim()||pigeon.ring;
+        pigeon.sex = document.getElementById('pSex').value;
+        pigeon.color = document.getElementById('pColor').value;
+        pigeon.eye = document.getElementById('pEye').value;
+        pigeon.strain = document.getElementById('pStrain').value;
+        pigeon.note = document.getElementById('pNote').value;
+      }
+      saveData(); renderPigeonList(); renderPedigreePanel();
+    });
+  }
+
+  // ========== 血統面板 ==========
+  function renderPedigreePanel() {
+    const panel = document.getElementById('panelPedigree');
+    panel.innerHTML = `
+      <input type="text" id="searchInput" placeholder="🔍 輸入足環號碼查血統">
+      <div id="pedigreeView"><div class="card">請輸入環號</div></div>
+    `;
+    document.getElementById('searchInput').addEventListener('input', e => showPedigree(e.target.value));
+  }
   function showPedigree(q) {
-    const container = document.getElementById('pedigreeView');
-    if(!q) { container.innerHTML='<div class="card">請輸入鴿子編號</div>'; return; }
+    const view = document.getElementById('pedigreeView');
+    if(!q) { view.innerHTML='<div class="card">請輸入環號</div>'; return; }
     const p = findPigeon(q);
-    if(!p) { container.innerHTML='<div class="card">❌ 找不到</div>'; return; }
+    if(!p) { view.innerHTML='<div class="card">❌ 找不到</div>'; return; }
     const tree = buildTree(p);
-    container.innerHTML = `<div class="card"><strong>${p.ring}</strong> 血統</div>`;
-    renderTree(tree, container);
+    view.innerHTML = `<div class="card"><strong>${p.ring}</strong> 血統樹</div>`;
+    renderTree(tree, view);
+  }
+  function buildTree(p, depth=0, max=3) {
+    if(!p || depth>max) return null;
+    return { p, depth, sire: buildTree(findPigeon(p.sire), depth+1, max), dam: buildTree(findPigeon(p.dam), depth+1, max) };
   }
   function renderTree(node, parent) {
     if(!node) return;
     const div = document.createElement('div');
     div.className = 'item';
     div.style.marginLeft = node.depth*10+'px';
-    div.innerHTML = `<strong>${node.p.ring}</strong> ${node.p.note||''}<br><small>父:${node.p.sire||'基礎'} 母:${node.p.dam||'基礎'}</small>`;
+    div.innerHTML = `<strong>${node.p.ring}</strong> ${node.p.sex} | ${node.p.color} | ${node.p.eye}<br><small>血統:${node.p.strain||''} | 父:${node.p.sire||'基礎'} 母:${node.p.dam||'基礎'}</small>`;
     parent.appendChild(div);
     if(node.sire) renderTree(node.sire, parent);
     if(node.dam) renderTree(node.dam, parent);
   }
-  function addPigeon() {
-    const ring = prompt('鴿環號/名稱：','2024-新鴿');
-    if(!ring) return;
-    if(findPigeon(ring)) return alert('已存在');
-    appData.pigeons.push({ id:ring, name:ring, ring, sire:'', dam:'', note:'' });
-    saveData();
-    document.getElementById('searchInput').value = ring;
-    showPedigree(ring);
-  }
 
+  // ========== 配對面板 ==========
+  function renderPairingPanel() {
+    const panel = document.getElementById('panelPairing');
+    panel.innerHTML = `
+      <div class="card">
+        <button class="btn" id="addPairBtn">➕ 新增配對</button>
+      </div>
+      <div id="pairList"></div>
+    `;
+    renderPairList();
+    document.getElementById('addPairBtn').addEventListener('click', ()=> editPairDialog(null));
+  }
   function renderPairList() {
     const list = document.getElementById('pairList');
-    if(list) list.innerHTML = appData.pairs.slice().reverse().map(p=>`<div class="item">${p.male} ❤️ ${p.female}<br>📅 ${p.date} | 🏠 ${p.nestBox||''}</div>`).join('');
+    list.innerHTML = appData.pairs.map(p => {
+      const male = findPigeon(p.maleRing);
+      const female = findPigeon(p.femaleRing);
+      return `
+      <div class="item">
+        <div class="item-actions">
+          <button class="icon-btn edit-pair" data-id="${p.id}">✏️</button>
+          <button class="icon-btn del-pair" data-id="${p.id}">🗑️</button>
+        </div>
+        <strong>${p.maleRing}(${male?.color||''})</strong> ❤️ <strong>${p.femaleRing}(${female?.color||''})</strong><br>
+        📅 ${p.date} | 🏠 ${p.nestBox}<br>
+        幼鴿:${p.chicks?.length||0}羽 <button class="btn-sm btn-outline chicks-btn" data-id="${p.id}">管理幼鴿</button>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.edit-pair').forEach(b => b.addEventListener('click', ()=>{
+      const pair = appData.pairs.find(p => p.id === b.dataset.id);
+      if(pair) editPairDialog(pair);
+    }));
+    list.querySelectorAll('.del-pair').forEach(b => b.addEventListener('click', ()=>{
+      if(confirm('刪除配對？')) { appData.pairs = appData.pairs.filter(p => p.id !== b.dataset.id); saveData(); renderPairList(); }
+    }));
+    list.querySelectorAll('.chicks-btn').forEach(b => b.addEventListener('click', ()=>{
+      const pair = appData.pairs.find(p => p.id === b.dataset.id);
+      if(pair) manageChicksDialog(pair);
+    }));
   }
-  function renderNestList() {
-    const list = document.getElementById('nestList');
-    if(list) list.innerHTML = appData.nests.map(n=>`<div class="item"><strong>📦 ${n.nestId}</strong> | ${n.pigeon||'空'}<br>📍 ${n.location||''}</div>`).join('');
+  function editPairDialog(pair=null) {
+    const isNew = !pair;
+    showModal(isNew?'新增配對':'編輯配對', `
+      <label>雄鴿環號</label><input id="pMaleRing" value="${pair?.maleRing||''}">
+      <label>雌鴿環號</label><input id="pFemaleRing" value="${pair?.femaleRing||''}">
+      <label>祖父血統</label><input id="pGrandSire" value="${pair?.grandSire||''}">
+      <label>祖母血統</label><input id="pGrandDam" value="${pair?.grandDam||''}">
+      <label>外祖父血統</label><input id="pGrandSireOut" value="${pair?.grandSireOut||''}">
+      <label>外祖母血統</label><input id="pGrandDamOut" value="${pair?.grandDamOut||''}">
+      <label>配對日期</label><input type="date" id="pDate" value="${pair?.date||''}">
+      <label>巢箱 (A-Z,1-9)</label><input id="pNestBox" value="${pair?.nestBox||''}">
+    `, ()=>{
+      const mRing = document.getElementById('pMaleRing').value.trim();
+      const fRing = document.getElementById('pFemaleRing').value.trim();
+      if(!mRing||!fRing) return alert('雄雌鴿環號必填');
+      const obj = {
+        id: pair?.id || 'p'+Date.now(),
+        maleRing: mRing, femaleRing: fRing,
+        date: document.getElementById('pDate').value,
+        nestBox: document.getElementById('pNestBox').value,
+        grandSire: document.getElementById('pGrandSire').value,
+        grandDam: document.getElementById('pGrandDam').value,
+        grandSireOut: document.getElementById('pGrandSireOut').value,
+        grandDamOut: document.getElementById('pGrandDamOut').value,
+        maleDetails: pair?.maleDetails || {},
+        femaleDetails: pair?.femaleDetails || {},
+        chicks: pair?.chicks || []
+      };
+      if(isNew) appData.pairs.push(obj);
+      else Object.assign(pair, obj);
+      saveData(); renderPairList();
+    });
   }
-  function refreshAllViews() {
-    renderPairList();
-    renderNestList();
-    showPedigree(document.getElementById('searchInput')?.value || '');
+  function manageChicksDialog(pair) {
+    let html = `<h3>幼鴿管理 - ${pair.maleRing} x ${pair.femaleRing}</h3>`;
+    pair.chicks.forEach((c,i) => {
+      html += `<div class="chick-row">
+        <input value="${c.seq}" placeholder="序號" style="width:40px" data-idx="${i}" class="cSeq">
+        <input value="${c.birthDate}" placeholder="出生日" style="width:80px" class="cBdate">
+        <input value="${c.ring}" placeholder="環號" style="width:80px" class="cRing">
+        <input value="${c.color}" placeholder="羽色" style="width:50px" class="cColor">
+        <select class="cSex" style="width:50px"><option ${c.sex==='公'?'selected':''}>公</option><option ${c.sex==='母'?'selected':''}>母</option></select>
+        <button class="btn-sm btn-danger del-chick">X</button>
+      </div>`;
+    });
+    html += `<button class="btn btn-sm" id="addChickRow">➕ 新增幼鴿</button>`;
+    showModal('幼鴿管理', html, ()=>{
+      const rows = document.querySelectorAll('.chick-row');
+      const newChicks = [];
+      rows.forEach(row => {
+        const seq = row.querySelector('.cSeq').value;
+        const birthDate = row.querySelector('.cBdate').value;
+        const ring = row.querySelector('.cRing').value;
+        const color = row.querySelector('.cColor').value;
+        const sex = row.querySelector('.cSex').value;
+        if(seq && ring) {
+          newChicks.push({ seq, birthDate, year: birthDate?.split('-')[0]||'', ring, color, sex, eye:'', race:'', rank:'', note:'' });
+        }
+      });
+      pair.chicks = newChicks;
+      saveData(); renderPairList();
+    });
+    document.getElementById('addChickRow').addEventListener('click', ()=>{
+      const row = document.createElement('div');
+      row.className = 'chick-row';
+      row.innerHTML = `<input placeholder="序號" style="width:40px" class="cSeq"><input placeholder="出生日" style="width:80px" class="cBdate"><input placeholder="環號" style="width:80px" class="cRing"><input placeholder="羽色" style="width:50px" class="cColor"><select class="cSex" style="width:50px"><option>公</option><option>母</option></select><button class="btn-sm btn-danger del-chick">X</button>`;
+      document.getElementById('addChickRow').before(row);
+      row.querySelector('.del-chick').addEventListener('click', ()=> row.remove());
+    });
+    document.querySelectorAll('.del-chick').forEach(b => b.addEventListener('click', ()=> b.closest('.chick-row').remove()));
   }
 
-  // 啟動
+  // ========== 藥物面板 ==========
+  function renderMedicationPanel() {
+    const panel = document.getElementById('panelMedication');
+    panel.innerHTML = `
+      <div class="card">
+        <label>足環號碼</label><input id="medRing">
+        <label>日期</label><input type="date" id="medDate">
+        <label>事項</label><input id="medNote">
+        <button class="btn" id="saveMedBtn">記錄</button>
+      </div>
+      <div id="medList"></div>
+    `;
+    renderMedList();
+    document.getElementById('saveMedBtn').addEventListener('click', ()=>{
+      const ring = document.getElementById('medRing').value.trim();
+      const date = document.getElementById('medDate').value;
+      const note = document.getElementById('medNote').value.trim();
+      if(!ring||!date||!note) return alert('請完整填寫');
+      appData.medications.push({ ring, date, note });
+      saveData(); renderMedList();
+      document.getElementById('medRing').value=''; document.getElementById('medDate').value=''; document.getElementById('medNote').value='';
+    });
+  }
+  function renderMedList() {
+    const list = document.getElementById('medList');
+    list.innerHTML = appData.medications.slice().reverse().map(m => `
+      <div class="item">
+        <strong>${m.ring}</strong> | ${m.date}<br>${m.note}
+        <button class="icon-btn del-med" style="float:right;">🗑️</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('.del-med').forEach((b,i) => b.addEventListener('click', ()=>{
+      const idx = appData.medications.length - 1 - i;
+      appData.medications.splice(idx,1);
+      saveData(); renderMedList();
+    }));
+  }
+
+  // ========== 訓放面板 ==========
+  function renderTrainingPanel() {
+    const panel = document.getElementById('panelTraining');
+    panel.innerHTML = `
+      <div class="card">
+        <label>訓放次數</label><select id="tSession"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+        <label>訓放地點</label><input id="tLocation">
+        <label>訓放時間</label><input type="datetime-local" id="tTime">
+        <hr>
+        <div id="tEntries"></div>
+        <button class="btn btn-sm" id="addEntryBtn">➕ 新增鴿子記錄</button>
+        <button class="btn" id="saveTrainingBtn" style="margin-top:8px;">儲存本次訓放</button>
+      </div>
+      <div id="trainingList"></div>
+    `;
+    let tempEntries = [];
+    function renderEntries() {
+      const container = document.getElementById('tEntries');
+      container.innerHTML = tempEntries.map((e,i) => `
+        <div class="chick-row">
+          <input placeholder="環號" value="${e.ring}" class="eRing">
+          <select class="eSex"><option ${e.sex==='公'?'selected':''}>公</option><option ${e.sex==='母'?'selected':''}>母</option></select>
+          <input placeholder="羽色" value="${e.color}" class="eColor">
+          <input placeholder="歸巢時間" value="${e.returnTime}" class="eReturn">
+          <button class="btn-sm btn-danger del-entry">X</button>
+        </div>
+      `).join('');
+      container.querySelectorAll('.del-entry').forEach(b => b.addEventListener('click', (e)=>{
+        const row = b.closest('.chick-row');
+        const idx = Array.from(row.parentNode.children).indexOf(row);
+        tempEntries.splice(idx,1); renderEntries();
+      }));
+    }
+    renderEntries();
+    document.getElementById('addEntryBtn').addEventListener('click', ()=>{
+      tempEntries.push({ ring:'', sex:'公', color:'', returnTime:'' });
+      renderEntries();
+    });
+    document.getElementById('saveTrainingBtn').addEventListener('click', ()=>{
+      const session = document.getElementById('tSession').value;
+      const location = document.getElementById('tLocation').value.trim();
+      const time = document.getElementById('tTime').value;
+      if(!location||!time) return alert('請填地點時間');
+      const entries = [];
+      document.querySelectorAll('#tEntries .chick-row').forEach(row => {
+        const ring = row.querySelector('.eRing').value.trim();
+        if(ring) entries.push({
+          ring, sex: row.querySelector('.eSex').value, color: row.querySelector('.eColor').value, returnTime: row.querySelector('.eReturn').value
+        });
+      });
+      appData.trainings.push({ id:'t'+Date.now(), session, location, time, entries });
+      saveData(); renderTrainingList();
+      document.getElementById('tLocation').value=''; document.getElementById('tTime').value='';
+      tempEntries = []; renderEntries();
+    });
+    renderTrainingList();
+  }
+  function renderTrainingList() {
+    const list = document.getElementById('trainingList');
+    list.innerHTML = '<h3>訓放紀錄</h3>';
+    appData.trainings.slice().reverse().forEach(t => {
+      list.innerHTML += `<div class="item">
+        <strong>第${t.session}次</strong> | ${t.location} | ${t.time}
+        <button class="icon-btn del-train" data-id="${t.id}" style="float:right;">🗑️</button>
+        <div class="table-scroll"><table><tr><th>環號</th><th>性別</th><th>羽色</th><th>歸巢時間</th></tr>
+        ${t.entries.map(e=>`<tr><td>${e.ring}</td><td>${e.sex}</td><td>${e.color}</td><td>${e.returnTime}</td></tr>`).join('')}
+        </table></div>
+      </div>`;
+    });
+    list.querySelectorAll('.del-train').forEach(b => b.addEventListener('click', ()=>{
+      appData.trainings = appData.trainings.filter(t => t.id !== b.dataset.id);
+      saveData(); renderTrainingList();
+    }));
+  }
+
+  // ========== 備份面板 ==========
+  function renderBackupPanel() {
+    document.getElementById('panelBackup').innerHTML = `
+      <div class="card">
+        <button class="btn" id="exportBtn">📤 下載備份</button>
+      </div>
+      <div class="card">
+        <input type="file" id="importFile" accept=".json">
+        <button class="btn btn-outline" id="importBtn">📥 還原資料</button>
+      </div>
+    `;
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `鴿舍備份_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    });
+    document.getElementById('importBtn').addEventListener('click', ()=>{
+      const f = document.getElementById('importFile').files[0];
+      if(!f) return alert('請選檔案');
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if(data.pigeons && data.pairs && data.nests !== undefined) {
+            appData = data; saveData(); alert('還原成功'); renderApp();
+          } else alert('格式不符');
+        } catch(ex) { alert('讀取失敗'); }
+      };
+      reader.readAsText(f);
+    });
+  }
+
+  function showModal(title, html, onSave) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `<div class="modal"><h3>${title}</h3><div id="modalContent">${html}</div>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn-outline btn-sm" id="modalCancel">取消</button>
+        <button class="btn btn-sm" id="modalSave">儲存</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('modalCancel').addEventListener('click', ()=> overlay.remove());
+    document.getElementById('modalSave').addEventListener('click', ()=>{
+      if(onSave) onSave();
+      overlay.remove();
+    });
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.remove(); });
+  }
+
   loadData();
   renderApp();
 </script>
