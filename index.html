@@ -6,7 +6,7 @@
   <title>鴿舍管家 · 全功能版</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
-    body { background:#f5f0e8; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:16px; font-size:18px; }  /* 基礎字體放大 */
+    body { background:#f5f0e8; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:16px; font-size:18px; }
     .app { max-width:600px; width:100%; background:#fffef9; border-radius:24px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.06); }
     h1 { font-size:2rem; color:#4a3b2f; margin-bottom:8px; }
     .sub { color:#7b6e5d; font-size:1rem; margin-bottom:16px; display:flex; justify-content:space-between; flex-wrap:wrap; }
@@ -45,6 +45,9 @@
     .search-select-item { cursor:pointer; padding:8px; border-bottom:1px solid #eee; }
     .search-select-item:hover { background:#e8e0d0; }
     .yellow-red { background:#ffff88; color:#cc0000; font-weight:bold; padding:2px 6px; border-radius:4px; }
+    .mode-toggle { display:flex; gap:8px; margin-bottom:12px; }
+    .mode-btn { flex:1; padding:10px; border-radius:30px; border:1px solid #ccc; background:#f5f0e8; cursor:pointer; font-size:1rem; font-weight:600; text-align:center; }
+    .mode-btn.active { background:#3e3629; color:#fff; border-color:#3e3629; }
     .btn-small { padding:6px 12px; font-size:0.9rem; }
   </style>
 </head>
@@ -67,7 +70,7 @@
     }
 
     // ----- 常數與全域 -----
-    const APP_PASSWORD = "5678";
+    const APP_PASSWORD = "6789";
     const STORAGE_KEY = "pigeon_loft_full_v7";
     let appData = {
       pigeons: [],
@@ -121,7 +124,7 @@
       statsEl.textContent = `總數: ${total} ｜ 公: ${male} ｜ 母: ${female}`;
     }
 
-    // ----- 通用鴿子搜尋選擇器（彈窗） -----
+    // ----- 通用鴿子搜尋選擇器（配對用） -----
     function showPigeonSelector(title, callback) {
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -147,7 +150,6 @@
           resultsDiv.innerHTML = '<div style="padding:8px;color:#888;">請輸入查詢條件</div>';
           return;
         }
-        // 先嘗試精確
         const exact = findPigeon(q);
         let list = [];
         if (exact) {
@@ -188,7 +190,6 @@
       searchInput.addEventListener('input', performSelectorSearch);
       overlay.querySelector('#selectorCancel').addEventListener('click', ()=> overlay.remove());
       overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.remove(); });
-      // 自動聚焦
       setTimeout(()=> searchInput.focus(), 100);
     }
 
@@ -326,19 +327,16 @@
       });
       list.innerHTML = html;
 
-      // 編輯
       list.querySelectorAll('.edit-pigeon').forEach(b => b.addEventListener('click', ()=>{
         const pigeon = findPigeon(b.dataset.ring);
         if(pigeon) editPigeonDialog(pigeon);
       }));
-      // 刪除
       list.querySelectorAll('.del-pigeon').forEach(b => b.addEventListener('click', ()=>{
         if(confirm('刪除鴿子 '+b.dataset.ring+' ？')) {
           appData.pigeons = appData.pigeons.filter(p => p.ring !== b.dataset.ring);
           saveData(); renderPigeonList(); updateStats();
         }
       }));
-      // 查看子女
       list.querySelectorAll('.view-children').forEach(b => b.addEventListener('click', ()=>{
         const ring = b.dataset.ring;
         const children = appData.pigeons.filter(p => p.sire === ring || p.dam === ring);
@@ -425,98 +423,266 @@
       });
     }
 
-    // ===== 血統面板（搜尋） =====
+    // ===== 血統面板（含模式切換：血統 / 幼鴿） =====
     function renderPedigreePanel() {
       const panel = document.getElementById('panelPedigree');
+      // 建立模式狀態（在閉包內）
+      let currentMode = 'pedigree'; // 'pedigree' 或 'children'
+
       panel.innerHTML = `
         <div class="card">
-          <input type="text" id="searchInput" placeholder="🔍 輸入足環號碼（精確）或任意關鍵字搜尋" style="font-size:1.2rem;">
-          <div class="search-hint">支援：年份、暱稱、性別、羽色、眼砂、賽事、名次</div>
+          <div class="mode-toggle">
+            <div class="mode-btn active" data-mode="pedigree">📋 血統</div>
+            <div class="mode-btn" data-mode="children">🔍 幼鴿</div>
+          </div>
+          <input type="text" id="searchInput" placeholder="🔍 輸入足環號碼（精確）或關鍵字" style="font-size:1.2rem;">
+          <div class="search-hint" id="searchHint">支援：年份、暱稱、性別、羽色、眼砂、賽事、名次</div>
         </div>
         <div id="pedigreeView"><div class="card" style="font-size:1rem;">請輸入查詢條件</div></div>
       `;
-      document.getElementById('searchInput').addEventListener('input', function() {
-        const q = this.value.trim();
-        if (!q) {
-          document.getElementById('pedigreeView').innerHTML = '<div class="card" style="font-size:1rem;">請輸入查詢條件</div>';
-          return;
-        }
-        const exact = findPigeon(q);
-        if (exact) {
-          showPedigreeTree(exact);
-          return;
-        }
-        const results = performSearch(q);
-        if (results.length === 0) {
-          document.getElementById('pedigreeView').innerHTML = '<div class="card" style="font-size:1rem;">❌ 找不到符合的鴿子</div>';
-        } else {
-          showSearchResults(results);
-        }
-      });
-    }
 
-    function performSearch(keyword) {
-      const lower = keyword.toLowerCase();
-      return appData.pigeons.filter(p => {
-        const fields = [p.year, p.name, p.sex, p.color, p.eye, p.race, p.rank, p.ring, p.strain, p.note];
-        return fields.some(f => f && f.toLowerCase().includes(lower));
-      });
-    }
-
-    function showSearchResults(results) {
+      const modeBtns = panel.querySelectorAll('.mode-btn');
+      const searchInput = document.getElementById('searchInput');
+      const searchHint = document.getElementById('searchHint');
       const view = document.getElementById('pedigreeView');
-      let html = `<div class="card" style="font-size:1rem;">🔍 找到 ${results.length} 筆符合的鴿子</div>`;
-      results.forEach((p, idx) => {
-        html += `
-          <div class="item pedigree-list-item">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex||'')} | ${escapeHtml(p.color||'')} | ${escapeHtml(p.eye||'')}
-                <br><small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')} | 名次:${escapeHtml(p.rank||'-')}</small>
-              </div>
-              <button class="btn-sm btn-outline view-pedigree-btn" data-ring="${escapeHtml(p.ring)}" style="font-size:0.9rem;">🔍 查看血統</button>
-            </div>
-          </div>
-        `;
-      });
-      view.innerHTML = html;
-      view.querySelectorAll('.view-pedigree-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          const ring = this.dataset.ring;
-          const pigeon = findPigeon(ring);
-          if (pigeon) showPedigreeTree(pigeon);
+
+      // 切換模式
+      function setMode(mode) {
+        currentMode = mode;
+        modeBtns.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+        if (mode === 'pedigree') {
+          searchInput.placeholder = '🔍 輸入足環號碼（精確）或關鍵字';
+          searchHint.textContent = '支援：年份、暱稱、性別、羽色、眼砂、賽事、名次';
+        } else {
+          searchInput.placeholder = '🔍 輸入足環號碼查詢子女';
+          searchHint.textContent = '輸入某羽種鴿的環號，顯示其所有子女';
+        }
+        // 清空結果並重新搜尋（若已有內容）
+        const val = searchInput.value.trim();
+        if (val) {
+          handleSearch(val);
+        } else {
+          view.innerHTML = '<div class="card" style="font-size:1rem;">請輸入查詢條件</div>';
+        }
+      }
+
+      modeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const mode = this.dataset.mode;
+          if (mode !== currentMode) {
+            setMode(mode);
+          }
         });
       });
+
+      // 搜尋處理
+      function handleSearch(q) {
+        if (!q) {
+          view.innerHTML = '<div class="card" style="font-size:1rem;">請輸入查詢條件</div>';
+          return;
+        }
+
+        if (currentMode === 'pedigree') {
+          // 血統模式
+          const exact = findPigeon(q);
+          if (exact) {
+            showPedigreeTree(exact);
+            return;
+          }
+          const results = performSearch(q);
+          if (results.length === 0) {
+            view.innerHTML = '<div class="card" style="font-size:1rem;">❌ 找不到符合的鴿子</div>';
+          } else {
+            showSearchResults(results, 'pedigree');
+          }
+        } else {
+          // 幼鴿模式
+          const exact = findPigeon(q);
+          if (exact) {
+            showChildrenList(exact);
+            return;
+          }
+          // 若不是精確，則先列出符合的鴿子，讓用戶選擇
+          const results = performSearch(q);
+          if (results.length === 0) {
+            view.innerHTML = '<div class="card" style="font-size:1rem;">❌ 找不到符合的鴿子</div>';
+          } else {
+            // 顯示匹配列表，每項有「查看子女」按鈕
+            let html = `<div class="card" style="font-size:1rem;">🔍 找到 ${results.length} 筆符合的鴿子，請點擊查看子女</div>`;
+            results.forEach(p => {
+              html += `
+                <div class="item pedigree-list-item">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex)} | ${escapeHtml(p.color)} | ${escapeHtml(p.eye)}
+                      <br><small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')}</small>
+                    </div>
+                    <button class="btn-sm btn-outline view-children-btn" data-ring="${escapeHtml(p.ring)}" style="font-size:0.9rem;">📋 查看子女</button>
+                  </div>
+                </div>
+              `;
+            });
+            view.innerHTML = html;
+            view.querySelectorAll('.view-children-btn').forEach(btn => {
+              btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const ring = this.dataset.ring;
+                const pigeon = findPigeon(ring);
+                if (pigeon) showChildrenList(pigeon);
+              });
+            });
+          }
+        }
+      }
+
+      // 血統模式的搜尋函數
+      function performSearch(keyword) {
+        const lower = keyword.toLowerCase();
+        return appData.pigeons.filter(p => {
+          const fields = [p.year, p.name, p.sex, p.color, p.eye, p.race, p.rank, p.ring, p.strain, p.note];
+          return fields.some(f => f && f.toLowerCase().includes(lower));
+        });
+      }
+
+      // 顯示血統樹（既有函數）
+      function showPedigreeTree(pigeon) {
+        const tree = buildTree(pigeon);
+        view.innerHTML = `<div class="card" style="font-size:1rem;"><strong>${escapeHtml(pigeon.ring)}</strong> (${escapeHtml(pigeon.year||'')}) 血統樹</div>`;
+        renderTree(tree, view);
+      }
+
+      function buildTree(p, depth=0, max=3) {
+        if(!p || depth>max) return null;
+        return { p, depth, sire: buildTree(findPigeon(p.sire), depth+1, max), dam: buildTree(findPigeon(p.dam), depth+1, max) };
+      }
+
+      function renderTree(node, parent) {
+        if(!node) return;
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.style.marginLeft = (node.depth*12)+'px';
+        div.innerHTML = `
+          <strong>${escapeHtml(node.p.ring)}</strong> (${escapeHtml(node.p.year||'')}) ${escapeHtml(node.p.sex)} | ${escapeHtml(node.p.color)} | ${escapeHtml(node.p.eye)}<br>
+          <small>血統:${escapeHtml(node.p.strain||'')} | 父:${escapeHtml(node.p.sire||'基礎')} 母:${escapeHtml(node.p.dam||'基礎')}</small>
+        `;
+        parent.appendChild(div);
+        if(node.sire) renderTree(node.sire, parent);
+        if(node.dam) renderTree(node.dam, parent);
+      }
+
+      // 顯示搜尋結果列表（血統模式）
+      function showSearchResults(results, mode) {
+        let html = `<div class="card" style="font-size:1rem;">🔍 找到 ${results.length} 筆符合的鴿子</div>`;
+        results.forEach(p => {
+          html += `
+            <div class="item pedigree-list-item">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex)} | ${escapeHtml(p.color)} | ${escapeHtml(p.eye)}
+                  <br><small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')}</small>
+                </div>
+                <button class="btn-sm btn-outline view-pedigree-btn" data-ring="${escapeHtml(p.ring)}" style="font-size:0.9rem;">🔍 查看血統</button>
+              </div>
+            </div>
+          `;
+        });
+        view.innerHTML = html;
+        view.querySelectorAll('.view-pedigree-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const ring = this.dataset.ring;
+            const pigeon = findPigeon(ring);
+            if (pigeon) showPedigreeTree(pigeon);
+          });
+        });
+      }
+
+      // ----- 顯示子女列表（幼鴿模式） -----
+      function showChildrenList(parent) {
+        // 收集所有子女（sire或dam等於parent.ring）
+        const children = appData.pigeons.filter(p => p.sire === parent.ring || p.dam === parent.ring);
+        if (children.length === 0) {
+          view.innerHTML = `<div class="card" style="font-size:1rem;">🕊️ ${escapeHtml(parent.ring)} 目前沒有子女記錄</div>`;
+          return;
+        }
+
+        // 建立 birthDate 映射（從配對的 chicks 中取得）
+        const birthMap = {};
+        appData.pairs.forEach(pair => {
+          pair.chicks.forEach(chick => {
+            if (chick.ring) {
+              birthMap[chick.ring] = chick.birthDate || '';
+            }
+          });
+        });
+
+        // 按出生日期排序（有日期者優先，無日期者按環號）
+        const sorted = children.slice().sort((a, b) => {
+          const dateA = birthMap[a.ring] || '';
+          const dateB = birthMap[b.ring] || '';
+          if (dateA && dateB) return dateA.localeCompare(dateB);
+          if (dateA) return -1;
+          if (dateB) return 1;
+          return a.ring.localeCompare(b.ring);
+        });
+
+        let html = `<div class="card" style="font-size:1rem;">🕊️ ${escapeHtml(parent.ring)} 的子女（共 ${sorted.length} 羽）</div>`;
+        html += `<div class="table-scroll"><table>
+          <thead><tr>
+            <th>序號</th><th>足環號碼</th><th>性別</th><th>羽色</th><th>眼砂</th><th>血統</th><th>賽事</th><th>名次</th><th>操作</th>
+          </tr></thead><tbody>`;
+        sorted.forEach((child, idx) => {
+          const seq = idx + 1;
+          html += `
+            <tr>
+              <td>${seq}</td>
+              <td><span class="yellow-red">${escapeHtml(child.ring)}</span></td>
+              <td>${escapeHtml(child.sex||'')}</td>
+              <td>${escapeHtml(child.color||'')}</td>
+              <td>${escapeHtml(child.eye||'')}</td>
+              <td>${escapeHtml(child.strain||'')}</td>
+              <td>${escapeHtml(child.race||'-')}</td>
+              <td>${escapeHtml(child.rank||'-')}</td>
+              <td><button class="btn-sm btn-outline view-pedigree-btn" data-ring="${escapeHtml(child.ring)}" style="font-size:0.8rem;">🔍血統</button></td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table></div>`;
+        view.innerHTML = html;
+
+        // 綁定血統按鈕
+        view.querySelectorAll('.view-pedigree-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const ring = this.dataset.ring;
+            const pigeon = findPigeon(ring);
+            if (pigeon) {
+              // 切換到血統模式並顯示血統樹
+              setMode('pedigree');
+              // 填入環號並觸發搜尋
+              const searchInput = document.getElementById('searchInput');
+              searchInput.value = ring;
+              // 模擬輸入事件
+              const event = new Event('input');
+              searchInput.dispatchEvent(event);
+            }
+          });
+        });
+      }
+
+      // 綁定搜尋輸入事件
+      searchInput.addEventListener('input', function() {
+        const q = this.value.trim();
+        handleSearch(q);
+      });
+
+      // 初始化模式（預設血統）
+      setMode('pedigree');
     }
 
-    function showPedigreeTree(pigeon) {
-      const view = document.getElementById('pedigreeView');
-      const tree = buildTree(pigeon);
-      view.innerHTML = `<div class="card" style="font-size:1rem;"><strong>${escapeHtml(pigeon.ring)}</strong> (${escapeHtml(pigeon.year||'')}) 血統樹</div>`;
-      renderTree(tree, view);
-    }
-
-    function buildTree(p, depth=0, max=3) {
-      if(!p || depth>max) return null;
-      return { p, depth, sire: buildTree(findPigeon(p.sire), depth+1, max), dam: buildTree(findPigeon(p.dam), depth+1, max) };
-    }
-
-    function renderTree(node, parent) {
-      if(!node) return;
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.style.marginLeft = (node.depth*12)+'px';
-      div.innerHTML = `
-        <strong>${escapeHtml(node.p.ring)}</strong> (${escapeHtml(node.p.year||'')}) ${escapeHtml(node.p.sex)} | ${escapeHtml(node.p.color)} | ${escapeHtml(node.p.eye)}<br>
-        <small>血統:${escapeHtml(node.p.strain||'')} | 父:${escapeHtml(node.p.sire||'基礎')} 母:${escapeHtml(node.p.dam||'基礎')}</small>
-      `;
-      parent.appendChild(div);
-      if(node.sire) renderTree(node.sire, parent);
-      if(node.dam) renderTree(node.dam, parent);
-    }
-
-    // ===== 配對面板（含搜尋選擇） =====
+    // ===== 配對面板 =====
     function renderPairingPanel() {
       const panel = document.getElementById('panelPairing');
       panel.innerHTML = `
@@ -563,7 +729,6 @@
       }));
     }
 
-    // 編輯配對（含搜尋按鈕）
     function editPairDialog(pair=null) {
       const isNew = !pair;
       const existingNest = pair?.nestBox || 'A-01';
@@ -599,7 +764,6 @@
           </select>
         </div>
       `, ()=>{
-        // 獲取公母環號
         const mRing = document.getElementById('pMaleRing').value.trim();
         const fRing = document.getElementById('pFemaleRing').value.trim();
         if(!mRing||!fRing) return alert('公母鴿環號必填');
@@ -623,7 +787,6 @@
         saveData(); renderPairList();
       });
 
-      // 綁定搜尋按鈕（必須在模態框出現後）
       setTimeout(() => {
         const maleInput = document.getElementById('pMaleRing');
         const femaleInput = document.getElementById('pFemaleRing');
@@ -640,7 +803,7 @@
       }, 100);
     }
 
-    // ----- 幼鴿管理（新增時同步到鴿子列表） -----
+    // ----- 幼鴿管理（同步至鴿子列表） -----
     function manageChicksDialog(pair) {
       const maleRing = pair.maleRing || '?';
       const femaleRing = pair.femaleRing || '?';
@@ -702,7 +865,7 @@
           const oldSeq = parseInt(row.dataset.seq) || 0;
           const oldChick = pair.chicks.find(c => c.seq === oldSeq);
           const birthDate = oldChick ? oldChick.birthDate : '';
-          // 同步添加到鴿子列表（若尚未存在）
+          // 同步至鴿子列表
           if (!findPigeon(ring)) {
             appData.pigeons.push({
               ring: ring,
@@ -726,7 +889,6 @@
         renderPairList();
         renderPigeonList();
         updateStats();
-        // 血統面板重新搜尋可略
       });
 
       setTimeout(() => {
