@@ -2,158 +2,411 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>鴿舍管家 · 手機優化版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover, shrink-to-fit=no">
+  <title>鴿舍管家 · 長輩友善版</title>
   <style>
-    :root {
-      --bg: #f5f0e8;
-      --surface: #fffef9;
-      --card-bg: #fff;
-      --accent: #3e3629;
-      --accent-light: #5e4e3a;
-      --border: #ede3cf;
-      --border-strong: #dbcfb8;
-      --text: #4a3b2f;
-      --text-secondary: #7b6e5d;
-      --muted: #7a6a55;
-      --highlight: #c8a96e;
-      --danger: #c44;
-      --pill-bg: #f0eadb;
-      --btn-outline-bg: #f2e7d5;
-      --btn-outline-border: #ccbc9c;
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-      --shadow-md: 0 10px 25px rgba(0,0,0,0.06);
-      --radius-sm: 10px;
-      --radius: 14px;
-      --radius-lg: 20px;
-      --radius-xl: 24px;
-      --radius-pill: 30px;
-      --transition: 0.2s ease;
-      --font-xs: 0.8rem;
-      --font-sm: 0.9rem;
-      --font: 1rem;
-      --font-md: 1.1rem;
-      --font-lg: 1.2rem;
-      --font-xl: 1.4rem;
-      --font-2xl: 2rem;
+    /* 全局重置與大字體設定 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
+    html {
+      font-size: 18px; /* 基礎字體放大 */
+      -webkit-text-size-adjust: 100%; /* 防止Safari自動縮放字體 */
+      touch-action: manipulation; /* 防止雙擊縮放 */
+    }
     body {
-      background: var(--bg);
+      background: #f5f0e8;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
-      padding: 16px;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      font-size: 18px;
-      -webkit-tap-highlight-color: transparent;
+      padding: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #3e3629;
+      line-height: 1.5;
     }
     .app {
-      max-width: 640px; width: 100%;
-      background: var(--surface);
-      border-radius: var(--radius-xl);
-      padding: 20px 18px;
-      box-shadow: var(--shadow-md);
-    }
-    h1 { font-size:var(--font-2xl); color:var(--text); margin-bottom:6px; }
-    .sub {
-      color: var(--text-secondary); font-size: var(--font); margin-bottom: 14px;
-      display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 8px;
-    }
-    .stats {
-      background: var(--pill-bg); border-radius: var(--radius-lg); padding: 7px 18px;
-      font-weight: 600; color: var(--text); font-size: var(--font);
-    }
-    .tab-bar {
-      display: flex; gap: 4px; background: var(--pill-bg); border-radius: var(--radius-full);
-      padding: 5px; margin-bottom: 16px; flex-wrap: wrap; position: sticky; top: 8px; z-index: 10;
-    }
-    .tab {
-      flex: 1 0 auto; text-align: center; padding: 12px 6px; font-weight: 700;
-      font-size: var(--font-sm); border-radius: var(--radius-pill); background: transparent;
-      border: none; color: var(--accent-light); cursor: pointer; transition: all var(--transition);
-      white-space: nowrap; min-width: 44px;
-    }
-    .tab:hover { color:var(--accent); background:rgba(255,255,255,0.5); }
-    .tab.active { background:#fff; box-shadow:var(--shadow-sm); color:var(--accent); }
-    .panel { display:none; }
-    .panel.active { display:block; }
-    .card {
-      background: var(--card-bg); border-radius: var(--radius-lg); padding: 16px;
-      margin-bottom: 14px; border: 1px solid var(--border);
-    }
-    label { font-size: var(--font); font-weight: 600; color: var(--muted); display: block; margin-bottom: 5px; }
-    input, select {
-      width: 100%; padding: 13px 14px; border: 1px solid var(--border-strong);
-      border-radius: var(--radius); font-size: var(--font-md); background: #fefcf7;
-      margin-bottom: 10px; font-family: inherit; color: var(--text);
-    }
-    .btn {
-      background: var(--accent); color: #fff; border: none; border-radius: var(--radius-pill);
-      padding: 13px 20px; font-weight: 700; width: 100%; font-size: var(--font-md);
-      cursor: pointer; margin-top: 4px; transition: all var(--transition);
-    }
-    .btn:hover { background:#2f2a20; }
-    .btn-outline { background:var(--btn-outline-bg); color:var(--accent); border:1px solid var(--btn-outline-border); }
-    .btn-sm { width:auto; padding:8px 16px; font-size:var(--font); margin:3px; border-radius:var(--radius-pill); }
-    .btn-xs { width:auto; padding:4px 10px; font-size:var(--font-xs); border-radius:var(--radius-sm); margin:1px; }
-    .btn-danger { background:var(--danger); color:#fff; }
-    .item {
-      background: #faf7f0; border-radius: var(--radius); padding: 14px 52px 14px 16px;
-      margin-bottom: 10px; border-left: 5px solid var(--highlight); font-size: var(--font);
-      position: relative; overflow: hidden; word-break: break-word;
-    }
-    .item-actions { position:absolute; top:12px; right:8px; display:flex; gap:4px; }
-    .icon-btn { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 4px 6px; }
-    .modal-overlay {
-      display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; padding: 16px;
-    }
-    .modal-overlay.open { display:flex; }
-    .modal {
-      background: #fff; border-radius: var(--radius-lg); padding: 22px 20px;
-      width: 100%; max-width: 620px; max-height: 82vh; overflow-y: auto;
-    }
-    .table-scroll { overflow-x:auto; margin-bottom:10px; border-radius:var(--radius-sm); border:1px solid var(--border); }
-    table { width:100%; border-collapse:collapse; font-size:var(--font); min-width:500px; }
-    th, td { border:1px solid #e8e0d0; padding:7px 8px; text-align:center; white-space:nowrap; }
-    th { background:#faf7f0; font-weight:700; color:var(--muted); font-size:var(--font-sm); }
-    .highlight-ring { background:#fffde0; color:#c0392b; font-weight:bold; padding:2px 8px; border-radius:4px; display:inline-block; }
-    .empty-state { text-align:center; padding:30px 20px; color:#bbb; font-size:var(--font); }
-    .search-select-item { cursor:pointer; padding:10px 12px; border-bottom:1px solid #eee; }
-    .search-select-item:hover { background:#e8e0d0; }
-    .time-group { display: flex; gap: 8px; align-items: center; }
-    .time-group input { flex: 2; margin-bottom: 0; }
-    .toast {
-      position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#333;
-      color:#fff; padding:10px 22px; border-radius:var(--radius-pill); font-size:var(--font);
-      z-index:200; animation:toastIn 0.3s ease, toastOut 0.3s ease 1.8s forwards;
-      white-space:nowrap;
-    }
-    @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
-    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateX(-50%) translateY(10px); } }
-    .confirm-overlay {
-      position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55);
-      z-index:150; display:flex; justify-content:center; align-items:center; padding:16px;
-    }
-    .confirm-box {
-      background:#fff; border-radius:var(--radius-lg); padding:24px 20px; text-align:center;
-      max-width:380px; width:100%;
+      max-width: 500px; /* 稍微縮小最大寬度，適應手機 */
+      width: 100%;
+      background: #fffef9;
+      border-radius: 28px;
+      padding: 18px 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
     }
 
-    /* 手機優化 */
-    @media (max-width: 480px) {
-      .app { padding: 14px 10px; }
-      h1 { font-size: 1.5rem; }
-      .tab { font-size: 0.75rem; padding: 10px 4px; }
-      .item { padding-right: 48px; }
-      .item-actions { top: 8px; right: 6px; }
-      .icon-btn { font-size: 1.2rem; padding: 2px 4px; }
-      .btn { font-size: var(--font); padding: 12px 16px; }
-      input, select { padding: 12px; font-size: var(--font); }
-      .table-scroll table { font-size: 0.9rem; }
-      th, td { padding: 5px 4px; }
+    /* 標題與統計 */
+    h1 {
+      font-size: 2.2rem;
+      color: #3e3629;
+      margin-bottom: 10px;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stats-box {
+      background: #f0eadb;
+      border-radius: 30px;
+      padding: 10px 20px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #3e3629;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* 導航標籤 (大按鈕) */
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      background: #f0eadb;
+      border-radius: 40px;
+      padding: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tab {
+      flex: 1 0 auto;
+      text-align: center;
+      padding: 14px 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 30px;
+      background: transparent;
+      border: none;
+      color: #5e4e3a;
+      cursor: pointer;
+      transition: 0.2s;
+      min-width: 60px;
+      white-space: nowrap;
+    }
+    .tab.active {
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      color: #3e3629;
+    }
+
+    /* 面板 */
+    .panel {
+      display: none;
+    }
+    .panel.active {
+      display: block;
+    }
+
+    /* 卡片容器 */
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 18px 16px;
+      margin-bottom: 16px;
+      border: 1px solid #ede3cf;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    /* 表單元素 (大尺寸) */
+    label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #5e4e3a;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #dbcfb8;
+      border-radius: 16px;
+      font-size: 1.2rem;
+      background: #fefcf7;
+      margin-bottom: 14px;
+      font-family: inherit;
+      color: #3e3629;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #c8a96e;
+      box-shadow: 0 0 0 3px rgba(200,169,110,0.2);
+    }
+
+    /* 按鈕 (大尺寸) */
+    .btn {
+      background: #3e3629;
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      padding: 16px 22px;
+      font-weight: 800;
+      width: 100%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: 0.2s;
+      text-align: center;
+      letter-spacing: 0.03em;
+      min-height: 54px; /* 確保觸摸目標夠大 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:active {
+      background: #2f2a20;
+      transform: scale(0.98);
+    }
+    .btn-outline {
+      background: #f2e7d5;
+      color: #3e3629;
+      border: 2px solid #ccbc9c;
+    }
+    .btn-outline:active {
+      background: #e8dcc8;
+    }
+    .btn-sm {
+      width: auto;
+      padding: 10px 18px;
+      font-size: 1rem;
+      margin: 4px;
+      min-height: 44px;
+    }
+    .btn-xs {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 1rem;
+      border-radius: 12px;
+      margin: 2px;
+      min-height: 38px;
+    }
+    .btn-danger {
+      background: #c44;
+      color: #fff;
+      border: none;
+    }
+    .btn-danger:active {
+      background: #a33;
+    }
+
+    /* 列表項目 (增加內邊距，防止重疊) */
+    .pigeon-item, .pair-item, .med-item {
+      background: #faf7f0;
+      border-radius: 18px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      border-left: 6px solid #c8a96e;
+      font-size: 1.1rem;
+      position: relative;
+      word-break: break-word;
+    }
+    .item-actions {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+    }
+    .icon-btn {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #ccc;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 14px;
+      line-height: 1;
+      min-width: 44px;
+      text-align: center;
+    }
+    .icon-btn:active {
+      background: #e0d8c8;
+    }
+
+    /* 模態框 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 28px;
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .modal h3 {
+      font-size: 1.6rem;
+      margin-bottom: 16px;
+      color: #3e3629;
+      text-align: center;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .modal-actions .btn, .modal-actions .btn-outline {
+      flex: 1;
+    }
+
+    /* 表格 (簡單滾動) */
+    .table-scroll {
+      overflow-x: auto;
+      margin-bottom: 10px;
+      border-radius: 16px;
+      border: 1px solid #ede3cf;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+      min-width: 480px;
+    }
+    th, td {
+      border: 1px solid #e8e0d0;
+      padding: 10px 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    th {
+      background: #faf7f0;
+      font-weight: 700;
+      color: #5e4e3a;
+      font-size: 1rem;
+    }
+    td button {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      margin: 2px;
+    }
+
+    /* 輔助文字 */
+    .highlight-ring {
+      background: #fffde0;
+      color: #c0392b;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: #bbb;
+      font-size: 1.1rem;
+    }
+
+    /* Toast 訊息 */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      z-index: 200;
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2s forwards;
+      white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    @keyframes toastIn {
+      from { opacity:0; transform:translateX(-50%) translateY(20px); }
+      to { opacity:1; transform:translateX(-50%) translateY(0); }
+    }
+    @keyframes toastOut {
+      from { opacity:1; }
+      to { opacity:0; transform:translateX(-50%) translateY(10px); }
+    }
+
+    /* 確認對話框 */
+    .confirm-overlay {
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.5);
+      z-index:150;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .confirm-box {
+      background: #fff;
+      border-radius: 28px;
+      padding: 28px 24px;
+      text-align: center;
+      max-width: 340px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .confirm-box p {
+      font-size: 1.2rem;
+      margin-bottom: 24px;
+      color: #3e3629;
+    }
+    .confirm-box .btn-row {
+      display: flex;
+      gap: 12px;
+    }
+    .confirm-box .btn-row button {
+      flex: 1;
+    }
+
+    /* 訓放特殊按鈕 */
+    .search-pigeon-btn {
+      font-size: 1.2rem !important;
+      background: #3e3629;
+      color: #fff;
+      padding: 16px;
+      border-radius: 30px;
+      width: 100%;
+      margin-bottom: 16px;
+      border: none;
+      font-weight: bold;
+    }
+
+    /* 響應式微調 */
+    @media (max-width: 400px) {
+      .app {
+        padding: 14px 10px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      .tab {
+        font-size: 0.85rem;
+        padding: 12px 4px;
+      }
+      input, select {
+        padding: 12px 14px;
+        font-size: 1rem;
+      }
+      .btn {
+        font-size: 1.1rem;
+        padding: 14px 18px;
+      }
     }
   </style>
 </head>
@@ -162,11 +415,12 @@
 
 <script>
   (function() {
-    const APP_PASSWORD = "6789";
-    const STORAGE_KEY = "pigeon_loft_full_v15";
+    const APP_PASSWORD = "5678";
+    const STORAGE_KEY = "pigeon_loft_elder_v1";
     const MAX_CHICKS_PER_PAIR = 10;
     const PEDIGREE_MAX_DEPTH = 3;
 
+    // 簡單工具函數
     const escapeHtml = (str) => {
       if (!str && str !== 0) return '';
       const map = { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' };
@@ -186,6 +440,7 @@
       overlay.querySelector('#confirmOk').addEventListener('click', () => { overlay.remove(); resolve(true); });
       overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } });
     });
+    const debounce = (fn, ms) => { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; };
 
     let appData = { pigeons:[], pairs:[], medications:[], trainings:[] };
     let unlocked = false;
@@ -239,7 +494,7 @@
       return { overlay, close };
     };
     const showPigeonSelector = (title, callback) => {
-      const contentHtml = `<input type="text" id="selectorSearch" placeholder="🔍 輸入環號或關鍵字" style="font-size:1.2rem;"><div id="selectorResults" style="max-height:320px;overflow-y:auto;margin-top:10px;"></div>`;
+      const contentHtml = `<input type="text" id="selectorSearch" placeholder="🔍 輸入環號或關鍵字" style="font-size:1.2rem;"><div id="selectorResults" style="max-height:300px;overflow-y:auto;margin-top:12px;"></div>`;
       const { overlay, close } = openModal(title, contentHtml, null, { showSave:false, cancelLabel:'關閉' });
       const searchInput = overlay.querySelector('#selectorSearch');
       const resultsDiv = overlay.querySelector('#selectorResults');
@@ -248,13 +503,12 @@
         if (!q) { resultsDiv.innerHTML = '<div class="empty-state">🔍 請輸入查詢條件</div>'; return; }
         const results = searchPigeons(q);
         if (results.length===0) { resultsDiv.innerHTML = '<div class="empty-state">❌ 找不到符合的鴿子</div>'; return; }
-        resultsDiv.innerHTML = results.map(p => `<div class="search-select-item" data-ring="${escapeHtml(p.ring)}"><strong>${escapeHtml(p.ring)}</strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex)} | ${escapeHtml(p.color)} | ${escapeHtml(p.eye)}</div>`).join('');
+        resultsDiv.innerHTML = results.map(p => `<div class="search-select-item" style="padding:12px; border-bottom:1px solid #eee; cursor:pointer;" data-ring="${escapeHtml(p.ring)}"><strong>${escapeHtml(p.ring)}</strong> ${escapeHtml(p.name)} | ${escapeHtml(p.sex)} | ${escapeHtml(p.color)}</div>`).join('');
         resultsDiv.querySelectorAll('.search-select-item').forEach(el => el.addEventListener('click', () => { const pigeon = findPigeon(el.dataset.ring); if(pigeon){ callback(pigeon); close(); } }));
       };
       searchInput.addEventListener('input', debounce(doSearch, 300));
-      setTimeout(() => searchInput.focus(), 120);
+      setTimeout(() => searchInput.focus(), 150);
     };
-    const debounce = (fn, ms) => { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; };
 
     const appRoot = document.getElementById('appRoot');
     const TAB_CONFIG = [
@@ -270,7 +524,7 @@
       updateStatsDisplay();
     };
     const renderLockScreen = () => {
-      appRoot.innerHTML = `<div class="pin-box"><h1>🕊️ 鴿舍管家</h1><p style="color:#7b6e5d;">請輸入管理密碼</p><input type="password" id="pinInput" placeholder="····" maxlength="10" style="font-size:1.8rem;width:180px;"><button class="btn" id="loginBtn" style="margin-top:12px;width:180px;">進入系統</button><p style="font-size:0.9rem;color:#bbb;">預設密碼：1234</p></div>`;
+      appRoot.innerHTML = `<div style="text-align:center;margin-top:50px;"><h1>🕊️ 鴿舍管家</h1><p style="font-size:1.3rem;color:#7b6e5d;margin-bottom:24px;">請輸入管理密碼</p><input type="password" id="pinInput" placeholder="····" maxlength="10" style="font-size:2rem;letter-spacing:8px;text-align:center;width:180px;margin:0 auto 16px;"><button class="btn" id="loginBtn" style="width:180px;margin:0 auto;">進入系統</button><p style="font-size:1rem;color:#bbb;margin-top:16px;">預設密碼：1234</p></div>`;
       const pinInput = document.getElementById('pinInput');
       const attemptLogin = () => { if(pinInput.value===APP_PASSWORD){ unlocked=true; renderApp(); } else { showToast('❌ 密碼錯誤'); pinInput.value=''; pinInput.focus(); } };
       document.getElementById('loginBtn').addEventListener('click', attemptLogin);
@@ -278,7 +532,14 @@
       setTimeout(() => pinInput?.focus(), 200);
     };
     const renderMainLayout = () => {
-      appRoot.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><h1>🕊️ 鴿舍管家</h1><button class="btn-outline" id="logoutBtn" style="width:auto;padding:9px 18px;">🔒 鎖定</button></div><div class="sub"><span>全功能管理系統</span><span class="stats" id="statsDisplay"></span></div><div class="tab-bar" id="tabBar"></div><div id="panelContainer"></div>`;
+      appRoot.innerHTML = `
+        <div class="header-row">
+          <h1>🕊️ 鴿舍管家</h1>
+          <button class="btn-outline btn-sm" id="logoutBtn">🔒 鎖定</button>
+        </div>
+        <div class="stats-box" id="statsDisplay"></div>
+        <div class="tab-bar" id="tabBar"></div>
+        <div id="panelContainer"></div>`;
       const tabBar = document.getElementById('tabBar');
       TAB_CONFIG.forEach(t => { const btn = document.createElement('button'); btn.className = 'tab'+(t.key===currentTab?' active':''); btn.dataset.tab = t.key; btn.textContent = t.label; btn.addEventListener('click', ()=> switchTab(t.key)); tabBar.appendChild(btn); });
       const panelContainer = document.getElementById('panelContainer');
@@ -296,9 +557,9 @@
       const map = { pigeons: renderPigeonsPanel, pedigree: renderPedigreePanel, pairing: renderPairingPanel, medication: renderMedicationPanel, training: renderTrainingPanel, backup: renderBackupPanel };
       const fn = map[tabKey]; if(fn) fn();
     };
-    const updateStatsDisplay = () => { const el = document.getElementById('statsDisplay'); if(!el) return; const s = getStats(); el.textContent = `總數: ${s.total} ｜ 公: ${s.male} ｜ 母: ${s.female}`; };
+    const updateStatsDisplay = () => { const el = document.getElementById('statsDisplay'); if(!el) return; const s = getStats(); el.textContent = `鴿子總數：${s.total}  公：${s.male}  母：${s.female}`; };
 
-    // 鴿子面板
+    // 鴿子列表渲染
     const renderPigeonsPanel = () => {
       const panel = document.getElementById('panel_pigeons'); if(!panel) return;
       panel.innerHTML = `<div class="card"><button class="btn" id="addPigeonBtn">➕ 新增鴿子</button></div><div id="pigeonList"></div>`;
@@ -307,10 +568,19 @@
     };
     const renderPigeonList = () => {
       const listEl = document.getElementById('pigeonList'); if(!listEl) return;
-      if(appData.pigeons.length===0){ listEl.innerHTML = '<div class="empty-state">🕊️ 尚無鴿子</div>'; return; }
-      listEl.innerHTML = appData.pigeons.map((p,i) => `<div class="item" data-ring="${escapeHtml(p.ring)}"><div class="item-actions"><button class="icon-btn edit-pigeon">✏️</button><button class="icon-btn del-pigeon">🗑️</button></div><strong><span class="highlight-ring">#${i+1} ${escapeHtml(p.ring)}</span></strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex)} | ${escapeHtml(p.color)} | ${escapeHtml(p.eye)}<br><small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')} | 名次:${escapeHtml(p.rank||'-')}</small></div>`).join('');
+      if(appData.pigeons.length===0){ listEl.innerHTML = '<div class="empty-state">尚無鴿子，點擊上方按鈕新增</div>'; return; }
+      listEl.innerHTML = appData.pigeons.map((p,i) => `
+        <div class="pigeon-item" data-ring="${escapeHtml(p.ring)}">
+          <div class="item-actions">
+            <button class="icon-btn edit-pigeon">✏️</button>
+            <button class="icon-btn del-pigeon">🗑️</button>
+          </div>
+          <strong><span class="highlight-ring">${escapeHtml(p.ring)}</span></strong> (${escapeHtml(p.year||'')})<br>
+          ${escapeHtml(p.name)} | ${escapeHtml(p.sex)} | ${escapeHtml(p.color)} | ${escapeHtml(p.eye)}<br>
+          <small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')}</small>
+        </div>`).join('');
       listEl.addEventListener('click', (e) => {
-        const item = e.target.closest('.item'); if(!item) return;
+        const item = e.target.closest('.pigeon-item'); if(!item) return;
         const ring = item.dataset.ring;
         if(e.target.closest('.edit-pigeon')){ const pigeon = findPigeon(ring); if(pigeon) openPigeonEditor(pigeon); }
         else if(e.target.closest('.del-pigeon')) deletePigeon(ring);
@@ -320,7 +590,19 @@
     const openPigeonEditor = (pigeon=null) => {
       const isNew = !pigeon;
       const d = isNew ? { year:'',ring:'',name:'',sex:'公',color:'',eye:'',strain:'',race:'',rank:'',sire:'',dam:'',note:'' } : {...pigeon};
-      const contentHtml = `<label>年份</label><input id="fYear" value="${escapeHtml(d.year)}"><label>足環號碼*</label><input id="fRing" value="${escapeHtml(d.ring)}" ${isNew?'':'readonly'}><label>暱稱</label><input id="fName" value="${escapeHtml(d.name)}"><label>性別</label><select id="fSex"><option value="公" ${d.sex==='公'?'selected':''}>公</option><option value="母" ${d.sex==='母'?'selected':''}>母</option></select><label>羽色</label><input id="fColor" value="${escapeHtml(d.color)}"><label>眼砂</label><input id="fEye" value="${escapeHtml(d.eye)}"><label>血統</label><input id="fStrain" value="${escapeHtml(d.strain)}"><label>賽事</label><input id="fRace" value="${escapeHtml(d.race)}"><label>名次</label><input id="fRank" value="${escapeHtml(d.rank)}"><label>父鴿</label><input id="fSire" value="${escapeHtml(d.sire)}"><label>母鴿</label><input id="fDam" value="${escapeHtml(d.dam)}"><label>備註</label><input id="fNote" value="${escapeHtml(d.note)}">`;
+      const contentHtml = `
+        <label>足環號碼*</label><input id="fRing" value="${escapeHtml(d.ring)}" ${isNew?'':'readonly'}>
+        <label>暱稱</label><input id="fName" value="${escapeHtml(d.name)}">
+        <label>年份</label><input id="fYear" value="${escapeHtml(d.year)}">
+        <label>性別</label><select id="fSex"><option value="公" ${d.sex==='公'?'selected':''}>公</option><option value="母" ${d.sex==='母'?'selected':''}>母</option></select>
+        <label>羽色</label><input id="fColor" value="${escapeHtml(d.color)}">
+        <label>眼砂</label><input id="fEye" value="${escapeHtml(d.eye)}">
+        <label>血統</label><input id="fStrain" value="${escapeHtml(d.strain)}">
+        <label>賽事</label><input id="fRace" value="${escapeHtml(d.race)}">
+        <label>名次</label><input id="fRank" value="${escapeHtml(d.rank)}">
+        <label>父鴿環號</label><input id="fSire" value="${escapeHtml(d.sire)}">
+        <label>母鴿環號</label><input id="fDam" value="${escapeHtml(d.dam)}">
+        <label>備註</label><input id="fNote" value="${escapeHtml(d.note)}">`;
       openModal(isNew?'新增鴿子':'編輯鴿子', contentHtml, (closeFn)=>{
         const ring = document.getElementById('fRing').value.trim(); if(!ring){ showToast('⚠️ 環號必填'); return; }
         if(isNew && findPigeon(ring)){ showToast('⚠️ 環號已存在'); return; }
@@ -330,26 +612,28 @@
       });
     };
 
-    // 血統面板
+    // 血統面板 (簡化)
     const renderPedigreePanel = () => {
       const panel = document.getElementById('panel_pedigree'); if(!panel) return;
-      panel.innerHTML = `<div class="card"><div class="mode-toggle"><button class="mode-btn active" data-mode="pedigree">📋 血統查詢</button><button class="mode-btn" data-mode="children">🔍 子女查詢</button></div><input type="text" id="pedigreeSearch" placeholder="🔍 輸入足環號碼或關鍵字"></div><div id="pedigreeResult"></div>`;
-      let currentMode = 'pedigree';
+      panel.innerHTML = `<div class="card"><input type="text" id="pedigreeSearch" placeholder="🔍 輸入環號查血統或子女"></div><div id="pedigreeResult"></div>`;
       const searchInput = document.getElementById('pedigreeSearch');
       const resultEl = document.getElementById('pedigreeResult');
-      const setMode = (mode) => { currentMode=mode; panel.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode)); handleSearch(searchInput.value.trim()); };
-      panel.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
-      const handleSearch = (q) => { if(!q){ resultEl.innerHTML=''; return; } const exact=findPigeon(q); if(exact){ currentMode==='pedigree'?showPedigree(exact):showChildren(exact); return; } const res=searchPigeons(q); if(res.length===0) resultEl.innerHTML='<div class="empty-state">❌ 無結果</div>'; else showResultList(res); };
-      const showPedigree = (p) => { let tree=buildTree(p); resultEl.innerHTML=`<div class="card"><strong>${escapeHtml(p.ring)}</strong> 血統樹</div>`; renderTree(tree,resultEl); };
-      const buildTree = (p,d=0) => { if(!p||d>PEDIGREE_MAX_DEPTH) return null; return {p,d,sire:buildTree(findPigeon(p.sire),d+1),dam:buildTree(findPigeon(p.dam),d+1)}; };
-      const renderTree = (node,parent) => { if(!node) return; const div=document.createElement('div'); div.className='item'; div.style.marginLeft=(node.d*14)+'px'; div.innerHTML=`<strong>${escapeHtml(node.p.ring)}</strong> ${escapeHtml(node.p.sex)} ${escapeHtml(node.p.color)}`; parent.appendChild(div); if(node.sire) renderTree(node.sire,parent); if(node.dam) renderTree(node.dam,parent); };
-      const showChildren = (parent) => { const children=appData.pigeons.filter(p=>p.sire===parent.ring||p.dam===parent.ring); if(children.length===0){ resultEl.innerHTML=`<div class="card">🕊️ ${escapeHtml(parent.ring)} 無子女</div>`; return; } let html=`<div class="card">🕊️ ${escapeHtml(parent.ring)} 子女</div><div class="table-scroll"><table><tr><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th></tr>`; children.forEach(c=>html+=`<tr><td>${escapeHtml(c.ring)}</td><td>${escapeHtml(c.sex)}</td><td>${escapeHtml(c.color)}</td><td>${escapeHtml(c.eye)}</td></tr>`); html+=`</table></div>`; resultEl.innerHTML=html; };
-      const showResultList = (res) => { let html=`<div class="card">🔍 找到 ${res.length} 筆</div>`; res.forEach(p=>html+=`<div class="item clickable-item" data-ring="${escapeHtml(p.ring)}"><strong>${escapeHtml(p.ring)}</strong> ${escapeHtml(p.name)}</div>`); resultEl.innerHTML=html; resultEl.querySelectorAll('.clickable-item').forEach(el=>el.addEventListener('click',()=>{ const p=findPigeon(el.dataset.ring); if(p) currentMode==='pedigree'?showPedigree(p):showChildren(p); })); };
-      searchInput.addEventListener('input', debounce(()=>handleSearch(searchInput.value.trim()), 300));
-      setMode('pedigree');
+      const handleSearch = (q) => {
+        if(!q){ resultEl.innerHTML=''; return; }
+        const pigeon = findPigeon(q);
+        if(pigeon){ showPedigreeInfo(pigeon); return; }
+        const results = searchPigeons(q);
+        if(results.length===0) resultEl.innerHTML='<div class="empty-state">找不到鴿子</div>';
+        else resultEl.innerHTML = results.map(p => `<div class="pigeon-item" data-ring="${escapeHtml(p.ring)}"><strong>${escapeHtml(p.ring)}</strong> ${escapeHtml(p.name)}</div>`).join('');
+      };
+      const showPedigreeInfo = (p) => {
+        const sire = findPigeon(p.sire); const dam = findPigeon(p.dam);
+        resultEl.innerHTML = `<div class="card"><strong>${escapeHtml(p.ring)}</strong> 血統<br>父：${escapeHtml(p.sire||'基礎')} ${sire?`(${escapeHtml(sire.color)})`:''}<br>母：${escapeHtml(p.dam||'基礎')} ${dam?`(${escapeHtml(dam.color)})`:''}</div>`;
+      };
+      searchInput.addEventListener('input', debounce(()=>handleSearch(searchInput.value.trim()), 400));
     };
 
-    // 配對面板
+    // 配對面板 (簡化)
     const renderPairingPanel = () => {
       const panel = document.getElementById('panel_pairing'); if(!panel) return;
       panel.innerHTML = `<div class="card"><button class="btn" id="addPairBtn">➕ 新增配對</button></div><div id="pairList"></div>`;
@@ -358,43 +642,46 @@
     };
     const renderPairList = () => {
       const listEl = document.getElementById('pairList'); if(!listEl) return;
-      if(appData.pairs.length===0){ listEl.innerHTML='<div class="empty-state">💞 尚無配對</div>'; return; }
-      listEl.innerHTML = appData.pairs.map(p => `<div class="item" data-pair-id="${escapeHtml(p.id)}"><div class="item-actions"><button class="icon-btn edit-pair-btn">✏️</button><button class="icon-btn del-pair-btn">🗑️</button></div><strong>${escapeHtml(p.maleRing)}</strong> ❤️ <strong>${escapeHtml(p.femaleRing)}</strong><br>📅 ${escapeHtml(p.date)} | 🏠 ${escapeHtml(p.nestBox)}<br><small>祖父:${escapeHtml(p.grandSire||'無')} 祖母:${escapeHtml(p.grandDam||'無')} | 外祖父:${escapeHtml(p.grandSireOut||'無')} 外祖母:${escapeHtml(p.grandDamOut||'無')}</small><br>幼鴿: ${p.chicks?.length||0} 羽 <button class="btn-sm btn-outline chicks-btn">🐣 管理</button></div>`).join('');
-      listEl.addEventListener('click', (e) => { const item=e.target.closest('.item'); if(!item) return; const pair=appData.pairs.find(p=>p.id===item.dataset.pairId); if(!pair) return; if(e.target.closest('.edit-pair-btn')) openPairEditor(pair); else if(e.target.closest('.del-pair-btn')) deletePair(pair); else if(e.target.closest('.chicks-btn')) openChicksManager(pair); });
+      if(appData.pairs.length===0){ listEl.innerHTML='<div class="empty-state">尚無配對</div>'; return; }
+      listEl.innerHTML = appData.pairs.map(p => `<div class="pair-item" data-pair-id="${escapeHtml(p.id)}"><div class="item-actions"><button class="icon-btn edit-pair-btn">✏️</button><button class="icon-btn del-pair-btn">🗑️</button></div><strong>${escapeHtml(p.maleRing)}</strong> ❤️ <strong>${escapeHtml(p.femaleRing)}</strong><br>📅 ${escapeHtml(p.date)} 🏠 ${escapeHtml(p.nestBox)}<br>幼鴿 ${p.chicks?.length||0}羽 <button class="btn-sm btn-outline chicks-btn">🐣管理</button></div>`).join('');
+      listEl.addEventListener('click', (e) => { const item=e.target.closest('.pair-item'); if(!item) return; const pair=appData.pairs.find(p=>p.id===item.dataset.pairId); if(!pair) return; if(e.target.closest('.edit-pair-btn')) openPairEditor(pair); else if(e.target.closest('.del-pair-btn')) deletePair(pair); else if(e.target.closest('.chicks-btn')) openChicksManager(pair); });
     };
     const deletePair = async (pair) => { if(await showConfirm('刪除此配對？')){ appData.pairs=appData.pairs.filter(p=>p.id!==pair.id); saveData(); renderPairList(); showToast('🗑️ 已刪除'); } };
     const openPairEditor = (pair=null) => {
       const d = pair || { maleRing:'',femaleRing:'',date:'',nestBox:'A-01',grandSire:'',grandDam:'',grandSireOut:'',grandDamOut:'' };
-      const [na,nn] = (d.nestBox||'A-01').includes('-') ? d.nestBox.split('-') : ['A','01'];
-      const contentHtml = `<label>公鴿</label><div style="display:flex;gap:6px;"><input id="fMaleRing" value="${escapeHtml(d.maleRing)}"><button class="btn-sm btn-outline" id="searchMaleBtn">🔍</button></div><label>母鴿</label><div style="display:flex;gap:6px;"><input id="fFemaleRing" value="${escapeHtml(d.femaleRing)}"><button class="btn-sm btn-outline" id="searchFemaleBtn">🔍</button></div><label>祖父</label><input id="fGrandSire" value="${escapeHtml(d.grandSire)}"><label>祖母</label><input id="fGrandDam" value="${escapeHtml(d.grandDam)}"><label>外祖父</label><input id="fGrandSireOut" value="${escapeHtml(d.grandSireOut)}"><label>外祖母</label><input id="fGrandDamOut" value="${escapeHtml(d.grandDamOut)}"><label>配對日期</label><input type="date" id="fDate" value="${escapeHtml(d.date)}"><label>巢箱</label><div class="row-flex"><select id="fNestAlpha">${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>`<option value="${l}" ${l===na?'selected':''}>${l}</option>`).join('')}</select><span>-</span><select id="fNestNum">${[...Array(9)].map((_,i)=>`<option value="${String(i+1).padStart(2,'0')}" ${String(i+1).padStart(2,'0')===nn?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
+      const [na,nn] = (d.nestBox||'A-01').split('-');
+      const contentHtml = `
+        <label>公鴿</label><div style="display:flex;gap:8px;"><input id="fMaleRing" value="${escapeHtml(d.maleRing)}"><button class="btn-sm btn-outline" id="searchMaleBtn">🔍</button></div>
+        <label>母鴿</label><div style="display:flex;gap:8px;"><input id="fFemaleRing" value="${escapeHtml(d.femaleRing)}"><button class="btn-sm btn-outline" id="searchFemaleBtn">🔍</button></div>
+        <label>配對日期</label><input type="date" id="fDate" value="${escapeHtml(d.date)}">
+        <label>巢箱</label><div style="display:flex;gap:8px;"><select id="fNestAlpha">${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>`<option value="${l}" ${l===na?'selected':''}>${l}</option>`).join('')}</select><span>-</span><select id="fNestNum">${[...Array(9)].map((_,i)=>`<option value="${String(i+1).padStart(2,'0')}" ${String(i+1).padStart(2,'0')===nn?'selected':''}>${i+1}</option>`).join('')}</select></div>`;
       openModal(pair?'編輯配對':'新增配對', contentHtml, (closeFn)=>{
         const mRing=document.getElementById('fMaleRing').value.trim(), fRing=document.getElementById('fFemaleRing').value.trim();
         if(!mRing||!fRing){ showToast('⚠️ 公母鴿必填'); return; }
-        const data = { id: pair?.id||genId(), maleRing:mRing, femaleRing:fRing, date:document.getElementById('fDate').value, nestBox:document.getElementById('fNestAlpha').value+'-'+document.getElementById('fNestNum').value, grandSire:document.getElementById('fGrandSire').value.trim(), grandDam:document.getElementById('fGrandDam').value.trim(), grandSireOut:document.getElementById('fGrandSireOut').value.trim(), grandDamOut:document.getElementById('fGrandDamOut').value.trim(), chicks: pair?.chicks||[] };
+        const data = { id: pair?.id||genId(), maleRing:mRing, femaleRing:fRing, date:document.getElementById('fDate').value, nestBox:document.getElementById('fNestAlpha').value+'-'+document.getElementById('fNestNum').value, grandSire:'', grandDam:'', grandSireOut:'', grandDamOut:'', chicks: pair?.chicks||[] };
         if(!pair) appData.pairs.push(data); else Object.assign(pair, data);
         saveData(); renderPairList(); showToast('✅ 已儲存'); closeFn();
       });
-      setTimeout(()=>{ document.getElementById('searchMaleBtn')?.addEventListener('click',()=>showPigeonSelector('公鴿',p=>{ document.getElementById('fMaleRing').value=p.ring; })); document.getElementById('searchFemaleBtn')?.addEventListener('click',()=>showPigeonSelector('母鴿',p=>{ document.getElementById('fFemaleRing').value=p.ring; })); },120);
+      setTimeout(()=>{ document.getElementById('searchMaleBtn')?.addEventListener('click',()=>showPigeonSelector('公鴿',p=>{ document.getElementById('fMaleRing').value=p.ring; })); document.getElementById('searchFemaleBtn')?.addEventListener('click',()=>showPigeonSelector('母鴿',p=>{ document.getElementById('fFemaleRing').value=p.ring; })); },100);
     };
     const openChicksManager = (pair) => {
-      let contentHtml = `<div class="table-scroll"><table><tr><th>序號</th><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th><th>備註</th><th></th></tr><tbody id="chicksTbody">`;
-      (pair.chicks||[]).forEach(c => { contentHtml += `<tr data-seq="${c.seq}"><td>${c.seq}</td><td><input value="${escapeHtml(c.ring||'')}" class="cRing"></td><td><select class="cSex"><option value="公" ${c.sex==='公'?'selected':''}>公</option><option value="母" ${c.sex==='母'?'selected':''}>母</option></select></td><td><input value="${escapeHtml(c.color||'')}" class="cColor"></td><td><input value="${escapeHtml(c.eye||'')}" class="cEye"></td><td><input value="${escapeHtml(c.note||'')}" class="cNote"></td><td><button class="btn-xs btn-danger del-chick-row">✕</button></td></tr>`; });
-      contentHtml += `</tbody></table></div>${(pair.chicks||[]).length < MAX_CHICKS_PER_PAIR ? `<button class="btn btn-sm" id="addChickRowBtn">➕ 新增幼鴿</button>` : '<p style="color:#c44;">已達上限</p>'}`;
-      openModal('幼鴿管理', contentHtml, (closeFn)=>{
+      let html = `<div class="table-scroll"><table><tr><th>序號</th><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th><th></th></tr><tbody id="chicksTbody">`;
+      (pair.chicks||[]).forEach(c => { html += `<tr data-seq="${c.seq}"><td>${c.seq}</td><td><input value="${escapeHtml(c.ring||'')}" class="cRing"></td><td><select class="cSex"><option value="公" ${c.sex==='公'?'selected':''}>公</option><option value="母" ${c.sex==='母'?'selected':''}>母</option></select></td><td><input value="${escapeHtml(c.color||'')}" class="cColor"></td><td><input value="${escapeHtml(c.eye||'')}" class="cEye"></td><td><button class="btn-xs btn-danger del-chick-row">✕</button></td></tr>`; });
+      html += `</tbody></table></div>${(pair.chicks||[]).length < MAX_CHICKS_PER_PAIR ? `<button class="btn btn-sm" id="addChickRowBtn">➕ 新增幼鴿</button>` : ''}`;
+      openModal('幼鴿管理', html, (closeFn)=>{
         const rows = document.querySelectorAll('#chicksTbody tr'); const newChicks = []; let seq=1;
         rows.forEach(row => { const ring = row.querySelector('.cRing')?.value?.trim(); if(!ring) return;
-          const sex=row.querySelector('.cSex')?.value||'公', color=row.querySelector('.cColor')?.value||'', eye=row.querySelector('.cEye')?.value||'', note=row.querySelector('.cNote')?.value||'';
-          if(!findPigeon(ring)) appData.pigeons.push({ring,name:ring,sex,color,eye,note,sire:pair.maleRing,dam:pair.femaleRing});
-          newChicks.push({seq:seq++, ring, sex, color, eye, note}); });
+          const sex=row.querySelector('.cSex')?.value||'公', color=row.querySelector('.cColor')?.value||'', eye=row.querySelector('.cEye')?.value||'';
+          if(!findPigeon(ring)) appData.pigeons.push({ring,name:ring,sex,color,eye,sire:pair.maleRing,dam:pair.femaleRing});
+          newChicks.push({seq:seq++, ring, sex, color, eye}); });
         pair.chicks = newChicks; saveData(); renderPairList(); renderPigeonList(); updateStatsDisplay(); showToast('✅ 幼鴿已儲存'); closeFn();
       });
-      setTimeout(()=>{ const tbody=document.getElementById('chicksTbody'); if(!tbody) return; tbody.addEventListener('click',(e)=>{ if(e.target.closest('.del-chick-row')){ e.target.closest('tr').remove(); updateSeq(); } }); const addBtn=document.getElementById('addChickRowBtn'); if(addBtn) addBtn.addEventListener('click',()=>{ const rows=tbody.querySelectorAll('tr'); if(rows.length>=MAX_CHICKS_PER_PAIR) return; const tr=document.createElement('tr'); tr.innerHTML=`<td>${rows.length+1}</td><td><input class="cRing"></td><td><select class="cSex"><option value="公">公</option><option value="母">母</option></select></td><td><input class="cColor"></td><td><input class="cEye"></td><td><input class="cNote"></td><td><button class="btn-xs btn-danger del-chick-row">✕</button></td>`; tbody.appendChild(tr); updateSeq(); }); function updateSeq(){ tbody.querySelectorAll('tr').forEach((tr,i)=>{ tr.dataset.seq=i+1; tr.querySelector('td').textContent=i+1; }); } },150);
     };
 
     // 藥物面板
     const renderMedicationPanel = () => {
       const panel = document.getElementById('panel_medication'); if(!panel) return;
-      panel.innerHTML = `<div class="card"><label>環號</label><div style="display:flex;gap:6px;"><input id="medRing"><button class="btn-sm btn-outline" id="searchMedBtn">🔍</button></div><label>開始日期</label><input type="date" id="medStartDate"><label>事由</label><input id="medReason"><label>處方</label><input id="medPrescription"><label>劑量</label><input id="medDosage"><label>結束日期</label><input type="date" id="medEndDate"><label>結果</label><input id="medResult"><button class="btn" id="saveMedBtn">💾 記錄</button></div><div id="medList"></div>`;
+      panel.innerHTML = `<div class="card"><label>環號</label><div style="display:flex;gap:8px;"><input id="medRing"><button class="btn-sm btn-outline" id="searchMedBtn">🔍</button></div><label>開始日期</label><input type="date" id="medStartDate"><label>事由</label><input id="medReason"><label>處方</label><input id="medPrescription"><label>劑量</label><input id="medDosage"><label>結束日期</label><input type="date" id="medEndDate"><label>結果</label><input id="medResult"><button class="btn" id="saveMedBtn">💾 記錄</button></div><div id="medList"></div>`;
       renderMedList();
       document.getElementById('searchMedBtn').addEventListener('click',()=>showPigeonSelector('鴿子',p=>{ document.getElementById('medRing').value=p.ring; }));
       document.getElementById('saveMedBtn').addEventListener('click',()=>{
@@ -406,163 +693,82 @@
     };
     const renderMedList = () => {
       const listEl = document.getElementById('medList'); if(!listEl) return;
-      if(appData.medications.length===0){ listEl.innerHTML='<h3>歷史記錄</h3><div class="empty-state">💊 無記錄</div>'; return; }
+      if(appData.medications.length===0){ listEl.innerHTML='<h3>歷史記錄</h3><div class="empty-state">尚無記錄</div>'; return; }
       let html='<h3>歷史記錄</h3>';
-      [...appData.medications].reverse().forEach((m,i)=>{ const realIdx=appData.medications.length-1-i; html+=`<div class="item" data-med-real-idx="${realIdx}"><strong>${escapeHtml(m.ring)}</strong><button class="icon-btn del-med-btn" style="float:right;">🗑️</button><br>🗓️ ${escapeHtml(m.startDate||'?')} ~ ${escapeHtml(m.endDate||'?')}<br>事由:${escapeHtml(m.reason||'-')} | 處方:${escapeHtml(m.prescription||'-')}<br>劑量:${escapeHtml(m.dosage||'-')} | 結果:${escapeHtml(m.result||'-')}</div>`; });
+      [...appData.medications].reverse().forEach((m,i)=>{ html+=`<div class="med-item" data-med-real-idx="${appData.medications.length-1-i}"><strong>${escapeHtml(m.ring)}</strong><button class="icon-btn del-med-btn" style="float:right;">🗑️</button><br>🗓️ ${escapeHtml(m.startDate||'?')}~${escapeHtml(m.endDate||'?')}<br>${escapeHtml(m.reason||'')} / ${escapeHtml(m.prescription||'')}</div>`; });
       listEl.innerHTML=html;
-      listEl.querySelectorAll('.del-med-btn').forEach(btn=>btn.addEventListener('click',()=>{ const idx=parseInt(btn.closest('.item').dataset.medRealIdx); if(!isNaN(idx)){ appData.medications.splice(idx,1); saveData(); renderMedList(); showToast('🗑️ 已刪除'); } }));
+      listEl.querySelectorAll('.del-med-btn').forEach(btn=>btn.addEventListener('click',()=>{ const idx=parseInt(btn.closest('.med-item').dataset.medRealIdx); if(!isNaN(idx)){ appData.medications.splice(idx,1); saveData(); renderMedList(); showToast('🗑️ 已刪除'); } }));
     };
 
-    // ==================== 訓放面板（搜尋按鈕字體調整） ====================
+    // 訓放面板 (簡化大字版)
     const renderTrainingPanel = () => {
       const panel = document.getElementById('panel_training'); if(!panel) return;
       panel.innerHTML = `
         <div class="card">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div><label>訓放次數</label><select id="tSession">${[...Array(10)].map((_,i)=>`<option value="${i+1}">第 ${i+1} 次</option>`).join('')}</select></div>
-            <div><label>地點</label><input id="tLocation" placeholder="例如：基隆港"></div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
-            <div><label>放訓日期</label><input type="date" id="tDate"></div>
-            <div><label>放訓時間</label><div class="time-group"><input type="time" id="tTime"><button class="btn btn-outline now-btn" id="setTimeNow">⏱️ 現在</button></div></div>
-          </div>
-          <hr>
-          <button class="btn-outline" id="searchPigeonForTrainingBtn" style="width:100%; margin-bottom:10px; font-size: var(--font);">🔍 搜索鴿子加入訓放</button>
+          <label>訓放次數</label><select id="tSession">${[...Array(10)].map((_,i)=>`<option value="${i+1}">第 ${i+1} 次</option>`).join('')}</select>
+          <label>地點</label><input id="tLocation" placeholder="例如：基隆港">
+          <label>放訓日期</label><input type="date" id="tDate">
+          <label>放訓時間</label><div style="display:flex;gap:8px;"><input type="time" id="tTime" style="flex:2;"><button class="btn-outline btn-sm" id="setTimeNow" style="flex:1;">⏱️ 現在</button></div>
+          <button class="search-pigeon-btn" id="searchPigeonForTrainingBtn">🔍 點擊搜索鴿子加入訓放</button>
           <div id="tempTrainingTable"></div>
-          <button class="btn" id="saveTrainingBtn" style="margin-top:8px;">💾 儲存本次訓放</button>
+          <button class="btn" id="saveTrainingBtn">💾 儲存本次訓放</button>
         </div>
         <div id="trainingList"></div>`;
 
       let tempEntries = [];
-
       const renderTempTable = () => {
         const container = document.getElementById('tempTrainingTable');
         if (!container) return;
         if (tempEntries.length === 0) {
-          container.innerHTML = '<div class="empty-state" style="padding:12px;">尚無鴿子，點擊上方按鈕搜索加入</div>';
+          container.innerHTML = '<div class="empty-state">尚無鴿子，請點擊上方按鈕搜索加入</div>';
           return;
         }
-        let html = `<div class="table-scroll"><table>
-          <thead><tr><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th><th>歸巢時間</th><th></th></tr></thead>
-          <tbody>`;
+        let html = `<div class="table-scroll"><table><tr><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th><th>歸巢時間</th><th></th></tr><tbody>`;
         tempEntries.forEach((e, idx) => {
-          html += `<tr data-index="${idx}">
-            <td><span class="highlight-ring">${escapeHtml(e.ring)}</span></td>
-            <td>${escapeHtml(e.sex)}</td>
-            <td>${escapeHtml(e.color)}</td>
-            <td>${escapeHtml(e.eye)}</td>
-            <td>${escapeHtml(e.returnTime)} <button class="btn-xs now-time-btn">⏱️</button></td>
-            <td><button class="btn-xs btn-danger del-temp-btn">✕</button></td>
-          </tr>`;
+          html += `<tr><td><span class="highlight-ring">${escapeHtml(e.ring)}</span></td><td>${escapeHtml(e.sex)}</td><td>${escapeHtml(e.color)}</td><td>${escapeHtml(e.eye)}</td><td>${escapeHtml(e.returnTime)} <button class="btn-xs now-time-btn">⏱️</button></td><td><button class="btn-xs btn-danger del-temp-btn">✕</button></td></tr>`;
         });
         html += `</tbody></table></div>`;
         container.innerHTML = html;
-
-        container.querySelectorAll('.now-time-btn').forEach((btn, i) => {
-          btn.addEventListener('click', () => {
-            const now = new Date();
-            tempEntries[i].returnTime = [now.getHours(), now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':');
-            renderTempTable();
-          });
-        });
-        container.querySelectorAll('.del-temp-btn').forEach((btn, i) => {
-          btn.addEventListener('click', () => {
-            tempEntries.splice(i, 1);
-            renderTempTable();
-          });
-        });
+        container.querySelectorAll('.now-time-btn').forEach((btn, i) => btn.addEventListener('click', () => { const now=new Date(); tempEntries[i].returnTime = [now.getHours(),now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':'); renderTempTable(); }));
+        container.querySelectorAll('.del-temp-btn').forEach((btn, i) => btn.addEventListener('click', () => { tempEntries.splice(i,1); renderTempTable(); }));
       };
-
       renderTempTable();
 
       document.getElementById('searchPigeonForTrainingBtn').addEventListener('click', () => {
         showPigeonSelector('選擇訓放鴿子', pigeon => {
-          tempEntries.push({ ring: pigeon.ring, sex: pigeon.sex || '公', color: pigeon.color || '', eye: pigeon.eye || '', returnTime: '' });
+          tempEntries.push({ ring: pigeon.ring, sex: pigeon.sex||'公', color: pigeon.color||'', eye: pigeon.eye||'', returnTime: '' });
           renderTempTable();
-          showToast('✅ 已加入列表，請設定歸巢時間後儲存');
+          showToast('✅ 已加入，請設定歸巢時間後儲存');
         });
       });
-
-      document.getElementById('setTimeNow').addEventListener('click', () => {
-        const now = new Date();
-        document.getElementById('tTime').value = [now.getHours(), now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':');
-      });
-
+      document.getElementById('setTimeNow').addEventListener('click', () => { const now=new Date(); document.getElementById('tTime').value = [now.getHours(),now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':'); });
       document.getElementById('saveTrainingBtn').addEventListener('click', () => {
-        const session = document.getElementById('tSession').value;
-        const location = document.getElementById('tLocation').value.trim();
-        const dateVal = document.getElementById('tDate').value;
-        const timeVal = document.getElementById('tTime').value;
-        if (!location || !dateVal || !timeVal) { showToast('⚠️ 請填寫地點、日期和時間'); return; }
-        if (tempEntries.length === 0) { showToast('⚠️ 至少加入一羽鴿子'); return; }
-        const datetime = dateVal + 'T' + timeVal;
-        const entries = tempEntries.map(e => ({ ring: e.ring, sex: e.sex, color: e.color, eye: e.eye, returnTime: e.returnTime, note: '' }));
-        appData.trainings.push({ id: genId(), session, location, time: datetime, entries });
-        saveData();
-        renderTrainingList();
-        document.getElementById('tLocation').value = '';
-        document.getElementById('tDate').value = '';
-        document.getElementById('tTime').value = '';
-        tempEntries = [];
-        renderTempTable();
-        showToast('✅ 訓放已儲存');
+        const session=document.getElementById('tSession').value, location=document.getElementById('tLocation').value.trim(), dateVal=document.getElementById('tDate').value, timeVal=document.getElementById('tTime').value;
+        if(!location||!dateVal||!timeVal){ showToast('⚠️ 請填寫地點、日期和時間'); return; }
+        if(tempEntries.length===0){ showToast('⚠️ 至少加入一羽鴿子'); return; }
+        appData.trainings.push({ id:genId(), session, location, time: dateVal+'T'+timeVal, entries: tempEntries.map(e=>({...e, note:''})) });
+        saveData(); renderTrainingList();
+        document.getElementById('tLocation').value=''; document.getElementById('tDate').value=''; document.getElementById('tTime').value=''; tempEntries=[]; renderTempTable(); showToast('✅ 訓放已儲存');
       });
-
       renderTrainingList();
     };
-
     const renderTrainingList = () => {
-      const listEl = document.getElementById('trainingList');
-      if (!listEl) return;
-      if (appData.trainings.length === 0) {
-        listEl.innerHTML = '<h3 style="font-size:1.1rem;">訓放紀錄</h3><div class="empty-state">🚀 尚無記錄</div>';
-        return;
-      }
-      let html = '<h3 style="font-size:1.1rem; margin-bottom:8px;">訓放紀錄</h3>';
+      const listEl = document.getElementById('trainingList'); if(!listEl) return;
+      if(appData.trainings.length===0){ listEl.innerHTML='<h3>訓放紀錄</h3><div class="empty-state">尚無記錄</div>'; return; }
+      let html='<h3>訓放紀錄</h3>';
       [...appData.trainings].reverse().forEach(t => {
-        const [date, time] = (t.time || '').includes('T') ? t.time.split('T') : [t.time, ''];
-        html += `<div class="item" data-training-id="${escapeHtml(t.id)}">
-          <strong>第${escapeHtml(t.session)}次</strong> | ${escapeHtml(t.location)}<br>📅 ${escapeHtml(date)} ⏱️ ${escapeHtml(time)}
-          <button class="icon-btn del-train-btn" style="float:right;">🗑️</button>
-          <div class="table-scroll"><table>
-            <thead><tr><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th><th>歸巢時間</th></tr></thead>
-            <tbody>${t.entries.map((e, idx) => `<tr data-entry-index="${idx}">
-              <td>${escapeHtml(e.ring)}</td><td>${escapeHtml(e.sex)}</td><td>${escapeHtml(e.color)}</td><td>${escapeHtml(e.eye||'')}</td>
-              <td>${escapeHtml(e.returnTime)} <button class="btn-xs now-record-btn" data-train-id="${escapeHtml(t.id)}" data-entry-index="${idx}">⏱️</button></td>
-            </tr>`).join('')}</tbody>
-          </table></div>
-        </div>`;
+        const [date, time] = t.time.split('T');
+        html += `<div class="pigeon-item" data-training-id="${escapeHtml(t.id)}"><strong>第${escapeHtml(t.session)}次</strong> ${escapeHtml(t.location)}<br>📅 ${escapeHtml(date)} ⏱️ ${escapeHtml(time)}<button class="icon-btn del-train-btn" style="float:right;">🗑️</button><div class="table-scroll"><table><tr><th>環號</th><th>性別</th><th>羽色</th><th>眼砂</th><th>歸巢時間</th></tr><tbody>${t.entries.map((e,idx)=>`<tr><td>${escapeHtml(e.ring)}</td><td>${escapeHtml(e.sex)}</td><td>${escapeHtml(e.color)}</td><td>${escapeHtml(e.eye)}</td><td>${escapeHtml(e.returnTime)} <button class="btn-xs now-record-btn" data-train-id="${escapeHtml(t.id)}" data-entry-index="${idx}">⏱️</button></td></tr>`).join('')}</tbody></table></div></div>`;
       });
-      listEl.innerHTML = html;
-
-      listEl.querySelectorAll('.del-train-btn').forEach(btn => btn.addEventListener('click', async () => {
-        if (await showConfirm('刪除此訓放記錄？')) {
-          const trainId = btn.closest('.item').dataset.trainingId;
-          appData.trainings = appData.trainings.filter(t => t.id !== trainId);
-          saveData();
-          renderTrainingList();
-          showToast('🗑️ 已刪除');
-        }
-      }));
-
-      listEl.querySelectorAll('.now-record-btn').forEach(btn => btn.addEventListener('click', () => {
-        const trainId = btn.dataset.trainId;
-        const entryIndex = parseInt(btn.dataset.entryIndex);
-        const training = appData.trainings.find(t => t.id === trainId);
-        if (training && training.entries[entryIndex]) {
-          const now = new Date();
-          training.entries[entryIndex].returnTime = [now.getHours(), now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':');
-          saveData();
-          renderTrainingList();
-          showToast('⏱️ 歸巢時間已記錄');
-        }
-      }));
+      listEl.innerHTML=html;
+      listEl.querySelectorAll('.del-train-btn').forEach(btn=>btn.addEventListener('click', async ()=>{ if(await showConfirm('刪除此訓放？')){ const id=btn.closest('.pigeon-item').dataset.trainingId; appData.trainings=appData.trainings.filter(t=>t.id!==id); saveData(); renderTrainingList(); showToast('🗑️ 已刪除'); } }));
+      listEl.querySelectorAll('.now-record-btn').forEach(btn=>btn.addEventListener('click', ()=>{ const trainId=btn.dataset.trainId, idx=parseInt(btn.dataset.entryIndex); const training=appData.trainings.find(t=>t.id===trainId); if(training?.entries[idx]){ const now=new Date(); training.entries[idx].returnTime=[now.getHours(),now.getMinutes()].map(n=>String(n).padStart(2,'0')).join(':'); saveData(); renderTrainingList(); showToast('⏱️ 時間已記錄'); } }));
     };
 
     // 備份面板
     const renderBackupPanel = () => {
       const panel = document.getElementById('panel_backup'); if(!panel) return;
-      panel.innerHTML = `<div class="card"><p>📤 下載備份</p><button class="btn" id="exportBtn">📤 下載 JSON</button></div><div class="card"><p>📥 還原資料</p><input type="file" id="importFile" accept=".json"><button class="btn btn-outline" id="importBtn">📥 還原</button></div><div class="card"><p>📊 目前：${appData.pigeons.length}羽 ｜ ${appData.pairs.length}配對 ｜ ${appData.medications.length}藥 ｜ ${appData.trainings.length}訓</p></div>`;
+      panel.innerHTML = `<div class="card"><button class="btn" id="exportBtn">📤 下載備份檔案</button></div><div class="card"><input type="file" id="importFile" accept=".json" style="font-size:1rem;"><button class="btn btn-outline" id="importBtn">📥 還原資料</button></div>`;
       document.getElementById('exportBtn').addEventListener('click',()=>{ const blob=new Blob([JSON.stringify(appData,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`鴿舍備份_${new Date().toISOString().slice(0,10)}.json`; a.click(); showToast('✅ 已下載'); });
       document.getElementById('importBtn').addEventListener('click',async()=>{ const file=document.getElementById('importFile').files[0]; if(!file){ showToast('⚠️ 請選擇檔案'); return; } if(!await showConfirm('還原將覆蓋現有資料，確定？')) return; try { const text=await file.text(); const data=JSON.parse(text); if(data&&Array.isArray(data.pigeons)){ appData=data; saveData(); renderApp(); showToast('✅ 還原成功'); } else showToast('⚠️ 格式不符'); } catch(e){ showToast('⚠️ 讀取失敗'); } });
     };
