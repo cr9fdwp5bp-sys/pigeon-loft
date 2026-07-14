@@ -49,6 +49,13 @@
     .mode-btn { flex:1; padding:10px; border-radius:30px; border:1px solid #ccc; background:#f5f0e8; cursor:pointer; font-size:1rem; font-weight:600; text-align:center; }
     .mode-btn.active { background:#3e3629; color:#fff; border-color:#3e3629; }
     .btn-small { padding:6px 12px; font-size:0.9rem; }
+    /* 訓放記錄行內樣式 */
+    .chick-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; background:#faf7f0; padding:6px; border-radius:10px; }
+    .chick-row > * { flex:1 1 auto; min-width:50px; }
+    .chick-row .eRing { flex:2; }
+    .chick-row .eColor { flex:1; }
+    .chick-row .eReturn { flex:1; }
+    .chick-row .eNote { flex:1.5; }
   </style>
 </head>
 <body>
@@ -70,7 +77,7 @@
     }
 
     // ----- 常數與全域 -----
-    const APP_PASSWORD = "6789";
+    const APP_PASSWORD = "1234";
     const STORAGE_KEY = "pigeon_loft_full_v7";
     let appData = {
       pigeons: [],
@@ -124,7 +131,7 @@
       statsEl.textContent = `總數: ${total} ｜ 公: ${male} ｜ 母: ${female}`;
     }
 
-    // ----- 通用鴿子搜尋選擇器（配對用） -----
+    // ----- 通用鴿子搜尋選擇器（配對、藥物、訓放共用） -----
     function showPigeonSelector(title, callback) {
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -294,7 +301,7 @@
       overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.remove(); });
     }
 
-    // ===== 鴿子面板（含編號、黃底紅字、查看幼鴿） =====
+    // ===== 鴿子面板 =====
     function renderPigeonsPanel() {
       const panel = document.getElementById('panelPigeons');
       panel.innerHTML = `
@@ -317,7 +324,6 @@
             <div class="item-actions">
               <button class="icon-btn edit-pigeon" data-ring="${escapeHtml(p.ring)}">✏️</button>
               <button class="icon-btn del-pigeon" data-ring="${escapeHtml(p.ring)}">🗑️</button>
-              <button class="icon-btn view-children" data-ring="${escapeHtml(p.ring)}" title="查看子女">🔍幼鴿</button>
             </div>
             <strong><span class="yellow-red">#${seq} ${escapeHtml(p.ring)}</span></strong> (${escapeHtml(p.year||'')}) ${escapeHtml(p.name)} | ${escapeHtml(p.sex||'')} | ${escapeHtml(p.color||'')} | ${escapeHtml(p.eye||'')}<br>
             <small>血統:${escapeHtml(p.strain||'')} | 賽事:${escapeHtml(p.race||'-')} | 名次:${escapeHtml(p.rank||'-')}</small><br>
@@ -336,19 +342,6 @@
           appData.pigeons = appData.pigeons.filter(p => p.ring !== b.dataset.ring);
           saveData(); renderPigeonList(); updateStats();
         }
-      }));
-      list.querySelectorAll('.view-children').forEach(b => b.addEventListener('click', ()=>{
-        const ring = b.dataset.ring;
-        const children = appData.pigeons.filter(p => p.sire === ring || p.dam === ring);
-        if (children.length === 0) {
-          alert('此鴿暫無子女記錄');
-          return;
-        }
-        let msg = `🕊️ ${ring} 的子女：\n`;
-        children.forEach(c => {
-          msg += `${c.ring} (${c.year||''}) ${c.name} | ${c.sex} | ${c.color}\n`;
-        });
-        alert(msg);
       }));
     }
 
@@ -423,11 +416,10 @@
       });
     }
 
-    // ===== 血統面板（含模式切換：血統 / 幼鴿） =====
+    // ===== 血統面板 =====
     function renderPedigreePanel() {
       const panel = document.getElementById('panelPedigree');
-      // 建立模式狀態（在閉包內）
-      let currentMode = 'pedigree'; // 'pedigree' 或 'children'
+      let currentMode = 'pedigree';
 
       panel.innerHTML = `
         <div class="card">
@@ -446,7 +438,6 @@
       const searchHint = document.getElementById('searchHint');
       const view = document.getElementById('pedigreeView');
 
-      // 切換模式
       function setMode(mode) {
         currentMode = mode;
         modeBtns.forEach(btn => {
@@ -459,7 +450,6 @@
           searchInput.placeholder = '🔍 輸入足環號碼查詢子女';
           searchHint.textContent = '輸入某羽種鴿的環號，顯示其所有子女';
         }
-        // 清空結果並重新搜尋（若已有內容）
         const val = searchInput.value.trim();
         if (val) {
           handleSearch(val);
@@ -477,7 +467,6 @@
         });
       });
 
-      // 搜尋處理
       function handleSearch(q) {
         if (!q) {
           view.innerHTML = '<div class="card" style="font-size:1rem;">請輸入查詢條件</div>';
@@ -485,7 +474,6 @@
         }
 
         if (currentMode === 'pedigree') {
-          // 血統模式
           const exact = findPigeon(q);
           if (exact) {
             showPedigreeTree(exact);
@@ -498,18 +486,15 @@
             showSearchResults(results, 'pedigree');
           }
         } else {
-          // 幼鴿模式
           const exact = findPigeon(q);
           if (exact) {
             showChildrenList(exact);
             return;
           }
-          // 若不是精確，則先列出符合的鴿子，讓用戶選擇
           const results = performSearch(q);
           if (results.length === 0) {
             view.innerHTML = '<div class="card" style="font-size:1rem;">❌ 找不到符合的鴿子</div>';
           } else {
-            // 顯示匹配列表，每項有「查看子女」按鈕
             let html = `<div class="card" style="font-size:1rem;">🔍 找到 ${results.length} 筆符合的鴿子，請點擊查看子女</div>`;
             results.forEach(p => {
               html += `
@@ -537,7 +522,6 @@
         }
       }
 
-      // 血統模式的搜尋函數
       function performSearch(keyword) {
         const lower = keyword.toLowerCase();
         return appData.pigeons.filter(p => {
@@ -546,7 +530,6 @@
         });
       }
 
-      // 顯示血統樹（既有函數）
       function showPedigreeTree(pigeon) {
         const tree = buildTree(pigeon);
         view.innerHTML = `<div class="card" style="font-size:1rem;"><strong>${escapeHtml(pigeon.ring)}</strong> (${escapeHtml(pigeon.year||'')}) 血統樹</div>`;
@@ -572,7 +555,6 @@
         if(node.dam) renderTree(node.dam, parent);
       }
 
-      // 顯示搜尋結果列表（血統模式）
       function showSearchResults(results, mode) {
         let html = `<div class="card" style="font-size:1rem;">🔍 找到 ${results.length} 筆符合的鴿子</div>`;
         results.forEach(p => {
@@ -599,16 +581,13 @@
         });
       }
 
-      // ----- 顯示子女列表（幼鴿模式） -----
       function showChildrenList(parent) {
-        // 收集所有子女（sire或dam等於parent.ring）
         const children = appData.pigeons.filter(p => p.sire === parent.ring || p.dam === parent.ring);
         if (children.length === 0) {
           view.innerHTML = `<div class="card" style="font-size:1rem;">🕊️ ${escapeHtml(parent.ring)} 目前沒有子女記錄</div>`;
           return;
         }
 
-        // 建立 birthDate 映射（從配對的 chicks 中取得）
         const birthMap = {};
         appData.pairs.forEach(pair => {
           pair.chicks.forEach(chick => {
@@ -618,7 +597,6 @@
           });
         });
 
-        // 按出生日期排序（有日期者優先，無日期者按環號）
         const sorted = children.slice().sort((a, b) => {
           const dateA = birthMap[a.ring] || '';
           const dateB = birthMap[b.ring] || '';
@@ -652,19 +630,15 @@
         html += `</tbody></table></div>`;
         view.innerHTML = html;
 
-        // 綁定血統按鈕
         view.querySelectorAll('.view-pedigree-btn').forEach(btn => {
           btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const ring = this.dataset.ring;
             const pigeon = findPigeon(ring);
             if (pigeon) {
-              // 切換到血統模式並顯示血統樹
               setMode('pedigree');
-              // 填入環號並觸發搜尋
               const searchInput = document.getElementById('searchInput');
               searchInput.value = ring;
-              // 模擬輸入事件
               const event = new Event('input');
               searchInput.dispatchEvent(event);
             }
@@ -672,13 +646,11 @@
         });
       }
 
-      // 綁定搜尋輸入事件
       searchInput.addEventListener('input', function() {
         const q = this.value.trim();
         handleSearch(q);
       });
 
-      // 初始化模式（預設血統）
       setMode('pedigree');
     }
 
@@ -803,7 +775,7 @@
       }, 100);
     }
 
-    // ----- 幼鴿管理（同步至鴿子列表） -----
+    // ----- 幼鴿管理 -----
     function manageChicksDialog(pair) {
       const maleRing = pair.maleRing || '?';
       const femaleRing = pair.femaleRing || '?';
@@ -865,7 +837,6 @@
           const oldSeq = parseInt(row.dataset.seq) || 0;
           const oldChick = pair.chicks.find(c => c.seq === oldSeq);
           const birthDate = oldChick ? oldChick.birthDate : '';
-          // 同步至鴿子列表
           if (!findPigeon(ring)) {
             appData.pigeons.push({
               ring: ring,
@@ -930,24 +901,33 @@
       }, 100);
     }
 
-    // ===== 藥物面板 =====
+    // ===== 藥物面板（支援搜尋） =====
     function renderMedicationPanel() {
       const panel = document.getElementById('panelMedication');
       panel.innerHTML = `
         <div class="card">
-          <label>足環號碼</label><input id="medRing" style="font-size:1.2rem;">
-          <div class="row-flex">
-            <div style="flex:1"><label>開始日期</label><input type="date" id="medStartDate" style="font-size:1.2rem;"></div>
-            <div style="flex:1"><label>結束日期</label><input type="date" id="medEndDate" style="font-size:1.2rem;"></div>
+          <label>足環號碼</label>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input id="medRing" style="flex:1; font-size:1.2rem;">
+            <button class="btn-sm btn-outline" id="searchMedBtn" style="width:auto; font-size:1rem;">🔍</button>
           </div>
+          <label>開始日期</label><input type="date" id="medStartDate" style="font-size:1.2rem;">
           <label>事由</label><input id="medReason" style="font-size:1.2rem;">
           <label>處方</label><input id="medPrescription" style="font-size:1.2rem;">
           <label>劑量</label><input id="medDosage" style="font-size:1.2rem;">
+          <label>結束日期</label><input type="date" id="medEndDate" style="font-size:1.2rem;">
           <label>結果</label><input id="medResult" style="font-size:1.2rem;">
           <button class="btn" id="saveMedBtn" style="font-size:1.1rem;">記錄</button>
         </div>
         <div id="medList"></div>
       `;
+
+      document.getElementById('searchMedBtn').addEventListener('click', function() {
+        showPigeonSelector('選擇藥物紀錄的鴿子', function(pigeon) {
+          document.getElementById('medRing').value = pigeon.ring;
+        });
+      });
+
       renderMedList();
       document.getElementById('saveMedBtn').addEventListener('click', ()=>{
         const ring = document.getElementById('medRing').value.trim();
@@ -989,7 +969,7 @@
       });
     }
 
-    // ===== 訓放面板 =====
+    // ===== 訓放面板（升級版） =====
     function renderTrainingPanel() {
       const panel = document.getElementById('panelTraining');
       panel.innerHTML = `
@@ -1005,32 +985,78 @@
         <div id="trainingList"></div>
       `;
       let tempEntries = [];
+
+      // 渲染暫存記錄
       function renderEntries() {
         const container = document.getElementById('tEntries');
         let html = '';
-        tempEntries.forEach((e,i) => {
+        tempEntries.forEach((e, i) => {
           html += `
-            <div class="chick-row" style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
-              <input placeholder="環號" value="${escapeHtml(e.ring)}" class="eRing" style="flex:1; font-size:1rem; padding:8px;">
-              <select class="eSex" style="font-size:1rem; padding:8px;"><option ${e.sex==='公'?'selected':''}>公</option><option ${e.sex==='母'?'selected':''}>母</option></select>
-              <input placeholder="羽色" value="${escapeHtml(e.color)}" class="eColor" style="flex:1; font-size:1rem; padding:8px;">
-              <input type="time" value="${escapeHtml(e.returnTime)}" class="eReturn" placeholder="24h" style="flex:1; font-size:1rem; padding:8px;">
+            <div class="chick-row" data-index="${i}">
+              <div style="display:flex; gap:4px; align-items:center; flex:2;">
+                <input placeholder="環號" value="${escapeHtml(e.ring)}" class="eRing" style="flex:1; font-size:1rem; padding:8px;">
+                <button class="btn-sm btn-outline search-ring-btn" style="width:auto; font-size:0.8rem; padding:4px 8px;">🔍</button>
+              </div>
+              <select class="eSex" style="font-size:1rem; padding:8px; min-width:50px;">
+                <option ${e.sex==='公'?'selected':''}>公</option>
+                <option ${e.sex==='母'?'selected':''}>母</option>
+              </select>
+              <input placeholder="羽色" value="${escapeHtml(e.color)}" class="eColor" style="flex:1; min-width:60px; font-size:1rem; padding:8px;">
+              <div style="display:flex; gap:4px; align-items:center; flex:1;">
+                <input type="time" value="${escapeHtml(e.returnTime)}" class="eReturn" style="flex:1; min-width:80px; font-size:1rem; padding:8px;">
+                <button class="btn-sm btn-outline now-btn" style="width:auto; font-size:0.8rem; padding:4px 8px;">現在</button>
+              </div>
+              <input placeholder="備註" value="${escapeHtml(e.note||'')}" class="eNote" style="flex:1.5; min-width:100px; font-size:1rem; padding:8px;">
               <button class="btn-sm btn-danger del-entry" style="font-size:1rem;">✕</button>
             </div>
           `;
         });
         container.innerHTML = html;
-        container.querySelectorAll('.del-entry').forEach(b => b.addEventListener('click', (e)=>{
-          const row = b.closest('.chick-row');
-          const idx = Array.from(row.parentNode.children).indexOf(row);
-          tempEntries.splice(idx,1); renderEntries();
-        }));
+
+        // 綁定搜尋按鈕
+        container.querySelectorAll('.search-ring-btn').forEach((btn) => {
+          btn.addEventListener('click', function() {
+            const row = this.closest('.chick-row');
+            const ringInput = row.querySelector('.eRing');
+            showPigeonSelector('選擇訓放鴿子', function(pigeon) {
+              ringInput.value = pigeon.ring;
+            });
+          });
+        });
+
+        // 綁定「現在」按鈕
+        container.querySelectorAll('.now-btn').forEach((btn) => {
+          btn.addEventListener('click', function() {
+            const row = this.closest('.chick-row');
+            const timeInput = row.querySelector('.eReturn');
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2,'0');
+            const mm = String(now.getMinutes()).padStart(2,'0');
+            timeInput.value = hh + ':' + mm;
+          });
+        });
+
+        // 綁定刪除按鈕
+        container.querySelectorAll('.del-entry').forEach((btn) => {
+          btn.addEventListener('click', function() {
+            const row = this.closest('.chick-row');
+            const index = Array.from(row.parentNode.children).indexOf(row);
+            tempEntries.splice(index, 1);
+            renderEntries();
+          });
+        });
       }
+
+      // 初次渲染空列表
       renderEntries();
+
+      // 新增記錄
       document.getElementById('addEntryBtn').addEventListener('click', ()=>{
-        tempEntries.push({ ring:'', sex:'公', color:'', returnTime:'' });
+        tempEntries.push({ ring:'', sex:'公', color:'', returnTime:'', note:'' });
         renderEntries();
       });
+
+      // 儲存訓放
       document.getElementById('saveTrainingBtn').addEventListener('click', ()=>{
         const session = document.getElementById('tSession').value;
         const location = document.getElementById('tLocation').value.trim();
@@ -1039,18 +1065,31 @@
         const entries = [];
         document.querySelectorAll('#tEntries .chick-row').forEach(row => {
           const ring = row.querySelector('.eRing').value.trim();
-          if(ring) entries.push({
-            ring, sex: row.querySelector('.eSex').value, color: row.querySelector('.eColor').value, returnTime: row.querySelector('.eReturn').value
-          });
+          if(ring) {
+            entries.push({
+              ring: ring,
+              sex: row.querySelector('.eSex').value,
+              color: row.querySelector('.eColor').value,
+              returnTime: row.querySelector('.eReturn').value,
+              note: row.querySelector('.eNote').value.trim()
+            });
+          }
         });
+        if(entries.length === 0) return alert('至少新增一筆鴿子記錄');
         appData.trainings.push({ id:'t'+Date.now(), session, location, time, entries });
-        saveData(); renderTrainingList();
-        document.getElementById('tLocation').value=''; document.getElementById('tTime').value='';
-        tempEntries = []; renderEntries();
+        saveData();
+        renderTrainingList();
+        // 清空表單
+        document.getElementById('tLocation').value = '';
+        document.getElementById('tTime').value = '';
+        tempEntries = [];
+        renderEntries();
       });
+
       renderTrainingList();
     }
 
+    // 顯示訓放記錄（含備註）
     function renderTrainingList() {
       const list = document.getElementById('trainingList');
       let html = '<h3 style="font-size:1.2rem;">訓放紀錄</h3>';
@@ -1058,8 +1097,11 @@
         html += `<div class="item">
           <strong>第${escapeHtml(t.session)}次</strong> | ${escapeHtml(t.location)} | ${escapeHtml(t.time)}
           <button class="icon-btn del-train" data-id="${escapeHtml(t.id)}" style="float:right;">🗑️</button>
-          <div class="table-scroll"><table><tr><th>環號</th><th>性別</th><th>羽色</th><th>歸巢時間</th></tr>
-          ${t.entries.map(e => `<tr><td>${escapeHtml(e.ring)}</td><td>${escapeHtml(e.sex)}</td><td>${escapeHtml(e.color)}</td><td>${escapeHtml(e.returnTime)}</td></tr>`).join('')}
+          <div class="table-scroll"><table>
+            <thead><tr><th>環號</th><th>性別</th><th>羽色</th><th>歸巢時間</th><th>備註</th></tr></thead>
+            <tbody>
+            ${t.entries.map(e => `<tr><td>${escapeHtml(e.ring)}</td><td>${escapeHtml(e.sex)}</td><td>${escapeHtml(e.color)}</td><td>${escapeHtml(e.returnTime)}</td><td>${escapeHtml(e.note||'')}</td></tr>`).join('')}
+            </tbody>
           </table></div>
         </div>`;
       });
